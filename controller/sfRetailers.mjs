@@ -18,41 +18,56 @@ const RetailerControll = () => {
     const domain = process.env.domain
 
     const getSFCustomers = async (req, res) => {
+        const { Company_Id } = req.query;
+
+        if (isNaN(Company_Id)) {
+            return invalidInput(res, 'Company_Id is required');
+        }
+
         try {
             const getQuery = `
             SELECT 
-            	rm.*,
-            	COALESCE(rom.Route_Name, '') AS RouteGet,
-            	COALESCE(am.Area_Id, '') AS AreaGet,
-            	COALESCE(sm.State_Name, '') AS StateGet,
-                    
-            	COALESCE(
-            		(
+                rm.*,
+                COALESCE(rom.Route_Name, '') AS RouteGet,
+                COALESCE(am.Area_Name, '') AS AreaGet,
+                COALESCE(sm.State_Name, '') AS StateGet,
+                COALESCE(cm.Company_Name, '') AS Company_Name,
+
+                COALESCE(
+                    (
                         SELECT 
-            				TOP (1) *
-            			FROM 
-            				tbl_Retailers_Locations
-            			WHERE
-                        	Retailer_Id = rm.Retailer_Id
+                            TOP (1) *
+                        FROM 
+                            tbl_Retailers_Locations
+                        WHERE
+                            Retailer_Id = rm.Retailer_Id
                             AND
-            				isActiveLocation = 1
-            			FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
-            		), '{}'
-            	) AS VERIFIED_LOCATION
+                            isActiveLocation = 1
+                        FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
+                    ), '{}'
+                ) AS VERIFIED_LOCATION
             
             FROM
-            	tbl_Retailers_Master AS rm
+                tbl_Retailers_Master AS rm
             LEFT JOIN
-            	tbl_Route_Master AS rom
-            	ON rom.Route_Id = rm.Route_Id
+                tbl_Route_Master AS rom
+                ON rom.Route_Id = rm.Route_Id
             LEFT JOIN
-            	tbl_Area_Master AS am
-            	ON am.Area_Id = rm.Area_Id
+                tbl_Area_Master AS am
+                ON am.Area_Id = rm.Area_Id
             LEFT JOIN
-            	tbl_State_Master AS sm
-            	ON sm.State_Id = rm.State_Id`;
+                tbl_State_Master AS sm
+                ON sm.State_Id = rm.State_Id
+            LEFT JOIN
+                tbl_Company_Master AS cm
+                ON cm.Company_id = rm.Company_Id
+            
+            WHERE
+                rm.Company_Id = @company`;
 
             const request = new sql.Request(SFDB);
+            request.input('company', Company_Id);
+
             const result = await request.query(getQuery);
 
             if (result.recordset.length) {
@@ -177,7 +192,7 @@ const RetailerControll = () => {
             const {
                 Retailer_Name, Contact_Person, Mobile_No, Retailer_Channel_Id,
                 Retailer_Class, Route_Id, Area_Id, Reatailer_Address, Reatailer_City, PinCode,
-                State_Id, Sales_Force_Id, Distributor_Id, Gstno, Latitude, Longitude, Created_By } = req.body;
+                State_Id, Sales_Force_Id, Branch_Id, Gstno, Latitude, Longitude, Created_By, Company_Id } = req.body;
 
             const insertQuery = `
                 INSERT INTO tbl_Retailers_Master (
@@ -196,7 +211,7 @@ const RetailerControll = () => {
                     PinCode,
                     State_Id,
                     Sales_Force_Id,
-                    Distributor_Id,
+                    Branch_Id,
                     Gstno,
                     
                     ERP_Id,
@@ -214,14 +229,15 @@ const RetailerControll = () => {
                     ImagePath,
                     ImageType,
                     ImageSize,
-                    Others_5 
+                    Others_5, 
+                    Company_Id 
                 ) VALUES (
                     @code, @rname, @cperson, @mobile, @channel, 
                     @rclass, @route, @area, @address, @city, 
-                    @pincode, @state, @salesforce, @distributor, @gst, 
+                    @pincode, @state, @salesforce, @branch, @gst, 
                     @erp, @lati, @long, @profile, @created, 
                     @createdby, @update, @updateby, @dflag, @filename, 
-                    @filepath, @filetype, @filesize, @other5 
+                    @filepath, @filetype, @filesize, @other5, @company 
                 )
             `;
 
@@ -241,7 +257,7 @@ const RetailerControll = () => {
             request.input('pincode', PinCode)
             request.input('state', State_Id)
             request.input('salesforce', Sales_Force_Id)
-            request.input('distributor', Distributor_Id)
+            request.input('branch', Branch_Id)
             request.input('gst', Gstno)
 
             request.input('erp', 0)
@@ -260,6 +276,7 @@ const RetailerControll = () => {
             request.input('filetype', filetype)
             request.input('filesize', filesize)
             request.input('other5', null)
+            request.input('company', Company_Id);
 
             const result = await request.query(insertQuery);
 
@@ -288,11 +305,13 @@ const RetailerControll = () => {
             const {
                 Retailer_Id, Retailer_Name, Contact_Person, Mobile_No, Retailer_Channel_Id,
                 Retailer_Class, Route_Id, Area_Id, Reatailer_Address, Reatailer_City, PinCode,
-                State_Id, Sales_Force_Id, Distributor_Id, Gstno, Created_By
+                State_Id, Sales_Force_Id, Gstno, Created_By
             } = req.body;
+            console.log(req.body)
     
             const updateQuery = `
-                UPDATE tbl_Retailers_Master
+                UPDATE 
+                    tbl_Retailers_Master
                 SET
                     Retailer_Name = @rname,
                     Contact_Person = @cperson,
@@ -308,19 +327,17 @@ const RetailerControll = () => {
 
                     State_Id = @state,
                     Sales_Force_Id = @salesforce,
-                    Distributor_Id = @distributor,
                     Gstno = @gst,
                     Profile_Pic = @profile,
-
                     Updated_Date = @updated,
+
                     Updated_By = @updatedby,
                     ImageName = @imagename,
                     ImagePath = @imagepath,
                     ImageType = @imagetype,
-
-                    ImageSize = @imagesize,
+                    ImageSize = @imagesize
                     
-                WHERE Retailer_Code = @id;
+                WHERE Retailer_Id = @id;
             `;
     
             const request = new sql.Request(SFDB)
@@ -339,7 +356,6 @@ const RetailerControll = () => {
             request.input('pincode', PinCode)
             request.input('state', State_Id)
             request.input('salesforce', Sales_Force_Id)
-            request.input('distributor', Distributor_Id)
             request.input('gst', Gstno)
 
             request.input('profile', domain + '/imageURL/retailers/' + fileName)
