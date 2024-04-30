@@ -71,9 +71,9 @@ const RetailerControll = () => {
             const result = await request.query(getQuery);
 
             if (result.recordset.length) {
+                const defaultImageUrl = domain + '/imageURL/retailers/imageNotFound.jpg';
                 const parsed = result.recordset.map(o => {
                     const imageUrl = domain + '/imageURL/retailers/' + o?.ImageName;
-                    const defaultImageUrl = domain + '/imageURL/retailers/imageNotFound.jpg';
                     const imagePath = path.join(__dirname, '..', 'uploads', 'retailers', o?.ImageName ? o?.ImageName : '');
                     return {
                         ...o,

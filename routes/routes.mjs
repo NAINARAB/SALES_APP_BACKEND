@@ -9,6 +9,7 @@ import userType from "../controller/masters/userType.mjs";
 import userMaster from "../controller/masters/users.mjs";
 import branchController from '../controller/masters/branch.mjs';
 import generalConfig from "../controller/generalConfig.mjs";
+import attendance from "../controller/general/attendance.mjs";
 
 const SfRouter = express.Router();
 
@@ -74,6 +75,17 @@ SfRouter.get('/api/masters/distributors', sfDistributors.getDistributors);
 
 // routes
 SfRouter.get('/api/masters/routes', sfRoutes.getRoutes);
+
+
+
+// attendance
+
+SfRouter.post('/api/attendance', attendance.addAttendance)
+SfRouter.put('/api/attendance', attendance.closeAttendance);
+
+SfRouter.get('/api/myTodayAttendance', attendance.getMyTodayAttendance);
+
+SfRouter.get('/api/getMyLastAttendance', attendance.getMyLastAttendanceOfToday)
 
 
 

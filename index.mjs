@@ -31,6 +31,9 @@ app.use('/imageURL/products', express.static(productsStaticPath));
 const retailersStaticPath = path.join(__dirname, 'uploads', 'retailers');
 app.use('/imageURL/retailers', express.static(retailersStaticPath));
 
+const attendanceStaticPath = path.join(__dirname, 'uploads', 'attendance');
+app.use('/imageURL/attendance', express.static(attendanceStaticPath));
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
