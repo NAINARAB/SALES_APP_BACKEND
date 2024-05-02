@@ -32,6 +32,43 @@ const userMaster = () => {
         }
     };
 
+    const customUserGet = async (req, res) => {
+        const { Company_id } = req.query;
+        
+        if (isNaN(Company_id)) {
+            invalidInput(res, 'Company_id is required');
+        }
+
+        try {
+            const query = `
+            SELECT
+            	u.*,
+            	b.BranchName,
+            	c.Company_id,
+            	c.Company_Name
+            FROM
+            	tbl_Users AS u
+            	LEFT JOIN tbl_Branch_Master AS b
+            	ON b.BranchId = u.BranchId
+
+            	LEFT JOIN tbl_Company_Master AS c
+            	ON c.Company_id = b.Company_id
+
+            WHERE
+            	c.Company_id = '${Company_id}'`;
+            
+            const result = await SFDB.query(query);
+
+            if (result.recordset.length > 0) {
+                dataFound(res, result.recordset)
+            } else {
+                noData(res)
+            }
+        } catch (e) {
+            servError(e, res);
+        }
+    }
+
     const postUser = async (req, res) => {
         const { Name, UserName, UserTypeId, Password, BranchId } = req.body;
 
@@ -159,6 +196,7 @@ const userMaster = () => {
     }
 
     return {
+        customUserGet,
         getUsers,
         postUser,
         editUser,

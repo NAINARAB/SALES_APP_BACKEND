@@ -32,6 +32,8 @@ const RetailerControll = () => {
                 COALESCE(am.Area_Name, '') AS AreaGet,
                 COALESCE(sm.State_Name, '') AS StateGet,
                 COALESCE(cm.Company_Name, '') AS Company_Name,
+                COALESCE(modify.Name, '') AS lastModifiedBy,
+                COALESCE(created.Name, '') AS createdBy,
 
                 COALESCE(
                     (
@@ -61,6 +63,12 @@ const RetailerControll = () => {
             LEFT JOIN
                 tbl_Company_Master AS cm
                 ON cm.Company_id = rm.Company_Id
+            LEFT JOIN
+                tbl_Users AS modify
+                ON modify.UserId = rm.Updated_By
+            LEFT JOIN
+                tbl_Users AS created
+                ON created.UserId = rm.Created_By
             
             WHERE
                 rm.Company_Id = @company`;

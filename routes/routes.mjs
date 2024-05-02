@@ -10,6 +10,7 @@ import userMaster from "../controller/masters/users.mjs";
 import branchController from '../controller/masters/branch.mjs';
 import generalConfig from "../controller/generalConfig.mjs";
 import attendance from "../controller/general/attendance.mjs";
+import closingStock from "../controller/sales/closingStock.mjs";
 
 const SfRouter = express.Router();
 
@@ -52,6 +53,7 @@ SfRouter.post('/api/masters/users', userMaster.postUser);
 SfRouter.put('/api/masters/users', userMaster.editUser);
 SfRouter.delete('/api/masters/users', userMaster.deleteUser);
 SfRouter.get('/api/masters/users/dropDown', userMaster.userDropDown);
+SfRouter.get('/api/masters/custom-users', userMaster.customUserGet)
 
 
 
@@ -67,6 +69,7 @@ SfRouter.put('/api/masters/retailerLocation', RetailerControll.verifyLocation)
 
 // productApi
 SfRouter.get('/api/masters/products', sfProductController.getProducts);
+SfRouter.get('/api/masters/products/grouped', sfProductController.getGroupedProducts);
 
 
 // distributors
@@ -82,10 +85,17 @@ SfRouter.get('/api/masters/routes', sfRoutes.getRoutes);
 
 SfRouter.post('/api/attendance', attendance.addAttendance)
 SfRouter.put('/api/attendance', attendance.closeAttendance);
+SfRouter.delete('/api/attendance', attendance.closeAttendance)
 
 SfRouter.get('/api/myTodayAttendance', attendance.getMyTodayAttendance);
 
-SfRouter.get('/api/getMyLastAttendance', attendance.getMyLastAttendanceOfToday)
+SfRouter.get('/api/getMyLastAttendance', attendance.getMyLastAttendanceOfToday);
+
+
+
+// sales - modules
+
+SfRouter.post('/api/retailer/closingStock', closingStock.closeingStock);
 
 
 

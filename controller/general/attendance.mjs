@@ -1,7 +1,6 @@
 import sql from 'mssql'
 import SFDB from '../../dbConfig/connectionPool.mjs'
 import { invalidInput, servError, dataFound, noData, falied, success } from '../../sfResFun.mjs';
-import CryptoJS from 'crypto-js';
 
 import uploadFile from '../../uploads/uploadMiddleware.mjs';
 import { createRequire } from 'module';
@@ -31,7 +30,7 @@ const AttendanceControll = () => {
             const filesize = req?.file?.size;
 
             if (!fileName) {
-                return invalidInput(res, 'Retailer Photo is required')
+                return invalidInput(res, 'Start_KM_Pic Photo is required')
             }
 
             const { UserId, Start_KM, Latitude, Longitude } = req.body;
@@ -98,8 +97,8 @@ const AttendanceControll = () => {
                 const withImg = result.recordset.map(o => {
                     const startImageUrl = domain + '/imageURL/attendance/' + o?.Start_KM_ImageName;
                     const endImageUrl = domain + '/imageURL/attendance/' + o?.End_KM_ImageName;
-                    const startImagePath = path.join(__dirname, '..', 'uploads', 'retailers', o?.Start_KM_ImageName ? o?.Start_KM_ImageName : '');
-                    const endImagePath = path.join(__dirname, '..', 'uploads', 'retailers', o?.End_KM_ImageName ? o?.End_KM_ImageName : '');
+                    const startImagePath = path.join(__dirname, '..', '..', 'uploads', 'attendance', o?.Start_KM_ImageName ? o?.Start_KM_ImageName : '');
+                    const endImagePath = path.join(__dirname, '..', 'uploads', 'attendance', o?.End_KM_ImageName ? o?.End_KM_ImageName : '');
                     return {
                         ...o,
                         startKmImageUrl:
@@ -142,13 +141,12 @@ const AttendanceControll = () => {
             WHERE 
                 UserId = @user
                 AND
-                CONVERT(DATE, Start_Date) = CONVERT(DATE, @date)
+                CONVERT(DATE, Start_Date) = CONVERT(DATE, GETDATE())
             ORDER BY
                 CONVERT(DATETIME, Start_Date) DESC`;
 
             const request = new sql.Request(SFDB);
             request.input('user', UserId)
-            request.input('date', new Date())
 
             const result = await request.query(query);
 
@@ -157,8 +155,8 @@ const AttendanceControll = () => {
                 const withImg = result.recordset.map(o => {
                     const startImageUrl = domain + '/imageURL/attendance/' + o?.Start_KM_ImageName;
                     const endImageUrl = domain + '/imageURL/attendance/' + o?.End_KM_ImageName;
-                    const startImagePath = path.join(__dirname, '..', 'uploads', 'retailers', o?.Start_KM_ImageName ? o?.Start_KM_ImageName : '');
-                    const endImagePath = path.join(__dirname, '..', 'uploads', 'retailers', o?.End_KM_ImageName ? o?.End_KM_ImageName : '');
+                    const startImagePath = path.join(__dirname, '..', '..', 'uploads', 'attendance', o?.Start_KM_ImageName ? o?.Start_KM_ImageName : '');
+                    const endImagePath = path.join(__dirname, '..', '..', 'uploads', 'attendance', o?.End_KM_ImageName ? o?.End_KM_ImageName : '');
                     return {
                         ...o,
                         startKmImageUrl:
@@ -198,10 +196,10 @@ const AttendanceControll = () => {
                 return invalidInput(res, 'Photo(End_KM_Pic) is required')
             }
             
-            const { Id, End_Date, End_KM } = req.body;
+            const { Id, End_KM } = req.body;
 
-            if (!Id || !End_Date || !End_KM) {
-                return invalidInput(res, 'Id, End_Date, End_KM is required')
+            if (!Id || !End_KM) {
+                return invalidInput(res, 'Id, End_KM is required')
             }
 
             const query = `
@@ -219,7 +217,7 @@ const AttendanceControll = () => {
                 Id = @id`;
 
             const request = new sql.Request(SFDB);
-            request.input('enddate', End_Date)
+            request.input('enddate', new Date())
             request.input('endkm', End_KM)
             request.input('imgname', fileName)
             request.input('imgpath', filePath)
@@ -279,8 +277,8 @@ const AttendanceControll = () => {
                 const withImg = result.recordset.map(o => {
                     const startImageUrl = domain + '/imageURL/attendance/' + o?.Start_KM_ImageName;
                     const endImageUrl = domain + '/imageURL/attendance/' + o?.End_KM_ImageName;
-                    const startImagePath = path.join(__dirname, '..', 'uploads', 'retailers', o?.Start_KM_ImageName ? o?.Start_KM_ImageName : '');
-                    const endImagePath = path.join(__dirname, '..', 'uploads', 'retailers', o?.End_KM_ImageName ? o?.End_KM_ImageName : '');
+                    const startImagePath = path.join(__dirname, '..', '..', 'uploads', 'attendance', o?.Start_KM_ImageName ? o?.Start_KM_ImageName : '');
+                    const endImagePath = path.join(__dirname, '..', '..', 'uploads', 'attendance', o?.End_KM_ImageName ? o?.End_KM_ImageName : '');
                     return {
                         ...o,
                         startKmImageUrl:
