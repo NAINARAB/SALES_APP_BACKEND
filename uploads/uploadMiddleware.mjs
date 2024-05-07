@@ -1,3 +1,5 @@
+
+
 import multer from 'multer';
 import fs from 'fs'
 import path from 'path';
@@ -25,7 +27,6 @@ const uploadFile = (req, res, uploadLocation, key) => {
         filename: function (req, file, cb) {
             const fileName = new Date().toISOString().replace(/:/g, '-') + "_" + file.originalname;
             cb(null, fileName);
-            // console.log(file)
         },
     });
 

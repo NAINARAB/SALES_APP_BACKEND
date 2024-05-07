@@ -80,8 +80,8 @@ const RetailerControll = () => {
 
             if (result.recordset.length) {
                 const defaultImageUrl = domain + '/imageURL/retailers/imageNotFound.jpg';
+                const imageUrl = domain + '/imageURL/retailers/';
                 const parsed = result.recordset.map(o => {
-                    const imageUrl = domain + '/imageURL/retailers/' + o?.ImageName;
                     const imagePath = path.join(__dirname, '..', 'uploads', 'retailers', o?.ImageName ? o?.ImageName : '');
                     return {
                         ...o,
@@ -89,7 +89,7 @@ const RetailerControll = () => {
                         imageUrl:
                             o.ImageName
                                 ? fs.existsSync(imagePath)
-                                    ? imageUrl
+                                    ? imageUrl + o?.ImageName
                                     : defaultImageUrl
                                 : defaultImageUrl
                     }
@@ -100,6 +100,139 @@ const RetailerControll = () => {
             }
         } catch (e) {
             servError(e, res)
+        }
+    }
+
+    const getRetailerDropDown = async (req, res) => {
+        const { Company_Id } = req.query;
+
+        if (isNaN(Company_Id)) {
+            return invalidInput(res, 'Company_Id is required');
+        }
+
+        try {
+            const query = `
+            SELECT 
+                Retailer_Id,
+                Retailer_Name
+            FROM 
+                tbl_Retailers_Master
+            WHERE
+                Company_Id = @comp`
+            const request = new sql.Request(SFDB);
+            request.input('comp', Company_Id);
+
+            const result = await request.query(query);
+
+            if (result.recordset.length > 0) {
+                dataFound(result.recordset)
+            } else {
+                noData(res)
+            }
+        } catch (e) {
+            servError(e, res);
+        }
+    }
+
+    const getAreaRetailers = async (req, res) => {
+        const { Company_Id } = req.query;
+
+        if (isNaN(Company_Id)) {
+            return invalidInput(res, 'Company_Id is required');
+        }
+
+        try {
+            const query = `
+            SELECT
+            	a.Area_Id,
+            	a.Area_Name,
+            	COALESCE((
+            		SELECT 
+                        rm.*,
+                        COALESCE(rom.Route_Name, '') AS RouteGet,
+                        COALESCE(am.Area_Name, '') AS AreaGet,
+                        COALESCE(sm.State_Name, '') AS StateGet,
+                        COALESCE(cm.Company_Name, '') AS Company_Name,
+                        COALESCE(modify.Name, '') AS lastModifiedBy,
+                        COALESCE(created.Name, '') AS createdBy,
+
+                        COALESCE(
+                            (
+                                SELECT 
+                                    TOP (1) *
+                                FROM 
+                                    tbl_Retailers_Locations
+                                WHERE
+                                    Retailer_Id = rm.Retailer_Id
+                                    AND
+                                    isActiveLocation = 1
+                                FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
+                            ), '{}'
+                        ) AS VERIFIED_LOCATION
+                    
+                    FROM
+                        tbl_Retailers_Master AS rm
+                        LEFT JOIN
+                            tbl_Route_Master AS rom
+                            ON rom.Route_Id = rm.Route_Id
+                        LEFT JOIN
+                            tbl_Area_Master AS am
+                            ON am.Area_Id = rm.Area_Id
+                        LEFT JOIN
+                            tbl_State_Master AS sm
+                            ON sm.State_Id = rm.State_Id
+                        LEFT JOIN
+                            tbl_Company_Master AS cm
+                            ON cm.Company_id = rm.Company_Id
+                        LEFT JOIN
+                            tbl_Users AS modify
+                            ON modify.UserId = rm.Updated_By
+                        LEFT JOIN
+                            tbl_Users AS created
+                            ON created.UserId = rm.Created_By
+            		WHERE
+            			rm.Area_Id = a.Area_Id
+            			AND
+            			rm.Company_Id = @comp
+            		FOR JSON PATH
+            	), '[]') AS Area_Retailers
+            FROM
+            	tbl_Area_Master AS a`;
+
+            const request = new sql.Request(SFDB);
+            request.input('comp', Company_Id);
+
+            const result = await request.query(query);
+
+            if (result.recordset.length > 0) {
+                const parsed = result.recordset.map(o => ({
+                    ...o,
+                    Area_Retailers: JSON.parse(o?.Area_Retailers)
+                }))
+                const defaultImageUrl = domain + '/imageURL/retailers/imageNotFound.jpg';
+                const imageUrl = domain + '/imageURL/retailers/';
+
+                const withImage = parsed.map(o => ({
+                    ...o,
+                    Area_Retailers: o?.Area_Retailers?.map(oo => {
+                        const imagePath = path.join(__dirname, '..', 'uploads', 'retailers', oo?.ImageName ? oo?.ImageName : '');
+                        return {
+                            ...oo,
+                            imageUrl:
+                                oo.ImageName
+                                    ? fs.existsSync(imagePath)
+                                        ? imageUrl + oo?.ImageName
+                                        : defaultImageUrl
+                                    : defaultImageUrl
+                        }
+                    })
+                }))
+                dataFound(res, withImage);
+            } else {
+                noData(res)
+            }
+        } catch (e) {
+            servError(e, res);
         }
     }
 
@@ -299,24 +432,23 @@ const RetailerControll = () => {
     }
 
     const putRetailers = async (req, res) => {
-        try {    
+        try {
             await uploadFile(req, res, 1, 'Profile_Pic');
             const fileName = req?.file?.filename;
             const filePath = req?.file?.path;
             const filetype = req?.file?.mimetype;
             const filesize = req?.file?.size;
-    
+
             if (!fileName) {
                 return invalidInput(res, 'Retailer Photo is required');
             }
-    
+
             const {
                 Retailer_Id, Retailer_Name, Contact_Person, Mobile_No, Retailer_Channel_Id,
                 Retailer_Class, Route_Id, Area_Id, Reatailer_Address, Reatailer_City, PinCode,
                 State_Id, Sales_Force_Id, Gstno, Created_By
             } = req.body;
-            console.log(req.body)
-    
+
             const updateQuery = `
                 UPDATE 
                     tbl_Retailers_Master
@@ -347,7 +479,7 @@ const RetailerControll = () => {
                     
                 WHERE Retailer_Id = @id;
             `;
-    
+
             const request = new sql.Request(SFDB)
             request.input('id', Retailer_Id);
             request.input('rname', Retailer_Name);
@@ -374,9 +506,9 @@ const RetailerControll = () => {
 
             request.input('imagetype', filetype)
             request.input('imagesize', filesize)
-    
+
             const result = await request.query(updateQuery);
-    
+
             if (result.rowsAffected[0] && result.rowsAffected[0] > 0) {
                 return success(res, 'Retailer information updated successfully');
             } else {
@@ -390,6 +522,8 @@ const RetailerControll = () => {
 
     return {
         getSFCustomers,
+        getRetailerDropDown,
+        getAreaRetailers,
         postLocationForCustomer,
         verifyLocation,
         addRetailers,
