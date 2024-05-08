@@ -65,7 +65,9 @@ SfRouter.get('/api/masters/retailers/areaRetailers', RetailerControll.getAreaRet
 SfRouter.post('/api/masters/retailers', RetailerControll.addRetailers);
 SfRouter.put('/api/masters/retailers', RetailerControll.putRetailers);
 SfRouter.get('/api/masters/retailers/productClosingStock', closingStock.getRetailerPreviousClosingStock);
-SfRouter.get('/api/transaction/retailers/closingStock', closingStock.getClosingStockValues)
+SfRouter.get('/api/transaction/retailers/closingStock', closingStock.getClosingStockValues);
+
+SfRouter.get('/api/masters/retailers/retailerInfo', RetailerControll.getRetailerInfoWithClosingStock)
 
 SfRouter.post('/api/masters/retailerLocation', RetailerControll.postLocationForCustomer)
 SfRouter.put('/api/masters/retailerLocation', RetailerControll.verifyLocation)
@@ -103,6 +105,7 @@ SfRouter.get('/api/getMyLastAttendance', attendance.getMyLastAttendanceOfToday);
 // sales - modules
 
 SfRouter.post('/api/masters/retailers/closingStock', closingStock.closeingStock);
+SfRouter.put('/api/masters/retailers/closingStock', closingStock.closeingStockUpdate);
 
 
 

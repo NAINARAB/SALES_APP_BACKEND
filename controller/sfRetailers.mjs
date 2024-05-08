@@ -71,7 +71,10 @@ const RetailerControll = () => {
                 ON created.UserId = rm.Created_By
             
             WHERE
-                rm.Company_Id = @company`;
+                rm.Company_Id = @company
+            
+            ORDER BY 
+                rm.Retailer_Name`;
 
             const request = new sql.Request(SFDB);
             request.input('company', Company_Id);
@@ -520,6 +523,138 @@ const RetailerControll = () => {
         }
     }
 
+    const getRetailerInfoWithClosingStock = async (req, res) => {
+        const { Retailer_Id, Fromdate, Todate } = req.query;
+
+        if (isNaN(Retailer_Id)) {
+            return invalidInput(res, 'Retailer_Id is required')
+        }
+        
+        try {
+            const query = `
+            SELECT 
+                rm.*,
+                COALESCE(rom.Route_Name, '') AS RouteGet,
+                COALESCE(am.Area_Name, '') AS AreaGet,
+                COALESCE(sm.State_Name, '') AS StateGet,
+                COALESCE(cm.Company_Name, '') AS Company_Name,
+                COALESCE(modify.Name, '') AS lastModifiedBy,
+                COALESCE(created.Name, '') AS createdBy,
+
+                COALESCE(
+                    (
+                        SELECT 
+                            TOP (1) *
+                        FROM 
+                            tbl_Retailers_Locations
+                        WHERE
+                            Retailer_Id = rm.Retailer_Id
+                            AND
+                            isActiveLocation = 1
+                        FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
+                    ), '{}'
+                ) AS VERIFIED_LOCATION,
+            
+            	COALESCE((
+            		SELECT 
+            			csgi.*,
+            			COALESCE((
+                            SELECT
+                                csi.*,
+                                COALESCE((SELECT Product_Name FROM tbl_Product_Master WHERE Product_Id = csi.Item_Id), 'unknown') AS ProductName
+                            FROM
+                                tbl_Closing_Stock_Info AS csi
+                            WHERE
+                                csi.St_Id = csgi.ST_Id
+                            FOR JSON PATH
+                         ), '[]') AS ProductCount,
+            			COALESCE((
+            				SELECT Name FROM tbl_Users WHERE UserId = csgi.Created_by
+            			), 'unknown') AS CreatedByGet
+            		FROM
+            			tbl_Closing_Stock_Gen_Info AS csgi
+            		WHERE 
+            			csgi.Retailer_Id = rm.Retailer_Id
+                        AND
+                        CONVERT(DATE, csgi.ST_Date) >= CONVERT(DATE, @from)
+                        AND
+                        CONVERT(DATE, csgi.ST_Date) <= CONVERT(DATE, @to)
+                    ORDER BY
+                        CONVERT(DATETIME, csgi.Created_on_date) DESC
+            		FOR JSON PATH
+            	), '[]') AS ClosingStocks
+            
+            FROM
+                tbl_Retailers_Master AS rm
+            
+            LEFT JOIN
+                tbl_Route_Master AS rom
+                ON rom.Route_Id = rm.Route_Id
+            LEFT JOIN
+                tbl_Area_Master AS am
+                ON am.Area_Id = rm.Area_Id
+            LEFT JOIN
+                tbl_State_Master AS sm
+                ON sm.State_Id = rm.State_Id
+            LEFT JOIN
+                tbl_Company_Master AS cm
+                ON cm.Company_id = rm.Company_Id
+            LEFT JOIN
+                tbl_Users AS modify
+                ON modify.UserId = rm.Updated_By
+            LEFT JOIN
+                tbl_Users AS created
+                ON created.UserId = rm.Created_By
+            
+            WHERE
+            	rm.Retailer_Id = @retail
+            `;
+
+            const request = new sql.Request(SFDB);
+            request.input('retail', Retailer_Id);
+            request.input('from', Fromdate || new Date());
+            request.input('to', Todate || new Date());
+
+            const result = await request.query(query);
+
+            if (result.recordset.length > 0) {
+                const defaultImageUrl = domain + '/imageURL/retailers/imageNotFound.jpg';
+                const imageUrl = domain + '/imageURL/retailers/';
+                const withImage = result.recordset.map(o => {
+                    const imagePath = path.join(__dirname, '..', 'uploads', 'retailers', o?.ImageName ? o?.ImageName : '');
+                    return {
+                        ...o,
+                        VERIFIED_LOCATION: JSON.parse(o.VERIFIED_LOCATION),
+                        imageUrl:
+                            o?.ImageName
+                                ? fs.existsSync(imagePath)
+                                    ? imageUrl + o?.ImageName
+                                    : defaultImageUrl
+                                : defaultImageUrl
+                    }
+                });
+
+                const parsed = withImage.map(o => ({
+                    ...o,
+                    ClosingStocks: JSON.parse(o?.ClosingStocks)
+                }))
+
+                const parsed2 = parsed.map(o => ({
+                    ...o,
+                    ClosingStocks: o?.ClosingStocks?.map(oo => ({
+                        ...oo,
+                        ProductCount: JSON.parse(oo?.ProductCount)
+                    }))
+                }))
+                dataFound(res, parsed2);
+            } else {
+                noData(res)
+            }
+        } catch (e) {
+            servError(e, res);
+        }
+    }
+
     return {
         getSFCustomers,
         getRetailerDropDown,
@@ -527,7 +662,8 @@ const RetailerControll = () => {
         postLocationForCustomer,
         verifyLocation,
         addRetailers,
-        putRetailers
+        putRetailers,
+        getRetailerInfoWithClosingStock,
     }
 }
 

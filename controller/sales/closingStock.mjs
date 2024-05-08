@@ -21,9 +21,9 @@ const ClosingStockControll = () => {
                 const genInfoQuery = `
                     INSERT INTO 
                         tbl_Closing_Stock_Gen_Info 
-                            (Company_Id, ST_Date, Retailer_Id, Narration, Created_by, Created_on_date)
+                            (Company_Id, ST_Date, Retailer_Id, Narration, Created_by, Created_on_date, Altered_by, Alterd_date)
                         VALUES
-                            (@comp, @date, @retailer, @narration, @created_by, @created_on);
+                            (@comp, @date, @retailer, @narration, @created_by, @created_on, @alter, @alterdte);
                     SELECT SCOPE_IDENTITY() AS ST_Id`;
 
                 const genInfoRequest = new sql.Request(transaction);
@@ -33,6 +33,8 @@ const ClosingStockControll = () => {
                 genInfoRequest.input('narration', Narration || '');
                 genInfoRequest.input('created_by', Created_by);
                 genInfoRequest.input('created_on', new Date());
+                genInfoRequest.input('alter', Created_by);
+                genInfoRequest.input('alterdte', new Date());
 
                 const genInfoResult = await genInfoRequest.query(genInfoQuery);
                 const stId = genInfoResult.recordset[0].ST_Id;
@@ -74,7 +76,14 @@ const ClosingStockControll = () => {
         }
 
         try {
-            const query = `SELECT * FROM Previous_Stock_Fn_1(CONVERT(DATE, @day), @retID)`;
+            const query = `
+            SELECT 
+                pre.*,
+                pm.Product_Name 
+            FROM 
+                Previous_Stock_Fn_1(CONVERT(DATE, @day), @retID) AS pre
+                LEFT JOIN tbl_Product_Master AS pm
+                ON pm.Product_Id = pre.Item_Id`;
 
             const request = new sql.Request(SFDB);
             request.input('day', reqDate || new Date());
@@ -111,7 +120,8 @@ const ClosingStockControll = () => {
             	    WHERE
             	    	St_Id = csgi.ST_Id
             	    FOR JSON PATH
-            	), '[]') AS ProductCount
+            	), '[]') AS ProductCount,
+                
             FROM
             	tbl_Closing_Stock_Gen_Info AS csgi
             WHERE 
@@ -128,11 +138,93 @@ const ClosingStockControll = () => {
                     ProductCount: JSON.parse(o?.ProductCount)
                 }))
                 dataFound(res, parsed);
+            } else {
+                noData(res)
             }
         } catch (e) {
             servError(e, res);
         }
     }
+
+    const closeingStockUpdate = async (req, res) => {
+        const { Company_Id, ST_Date, Retailer_Id, Narration, Created_by, Product_Stock_List, ST_Id } = req.body;
+    
+        try {
+            if (isNaN(Company_Id) || isNaN(Retailer_Id) || isNaN(Created_by) || !Array.isArray(Product_Stock_List)) {
+                return invalidInput(res, 'Invalid input data');
+            }
+    
+            const transaction = SFDB.transaction();
+    
+            await transaction.begin();
+    
+            try {
+                const genInfoUpdateQuery = `
+                    UPDATE 
+                        tbl_Closing_Stock_Gen_Info 
+                    SET 
+                        Company_Id = @comp,
+                        ST_Date = @date, 
+                        Retailer_Id = @retailer, 
+                        Narration = @narration, 
+                        Altered_by = @created_by, 
+                        Alterd_date = @created_on
+                    WHERE 
+                        ST_Id = @stid`;
+    
+                const genInfoUpdateRequest = new sql.Request(transaction);
+                genInfoUpdateRequest.input('comp', Company_Id);
+                genInfoUpdateRequest.input('date', ST_Date ? new Date(ST_Date) : new Date());
+                genInfoUpdateRequest.input('retailer', Retailer_Id);
+                genInfoUpdateRequest.input('narration', Narration || '');
+                genInfoUpdateRequest.input('created_by', Created_by);
+                genInfoUpdateRequest.input('created_on', new Date());
+                genInfoUpdateRequest.input('stid', ST_Id);
+    
+                await genInfoUpdateRequest.query(genInfoUpdateQuery);
+    
+                const deleteDetailsQuery = `
+                    DELETE FROM 
+                        tbl_Closing_Stock_Info 
+                    WHERE 
+                        ST_Id = @stId`;
+    
+                const deleteDetailsRequest = new sql.Request(transaction);
+                deleteDetailsRequest.input('stId', ST_Id);
+                await deleteDetailsRequest.query(deleteDetailsQuery);
+    
+                const insertDetailsQuery = `
+                    INSERT INTO 
+                        tbl_Closing_Stock_Info 
+                            (ST_Id, Company_Id, S_No, Item_Id, ST_Qty)
+                        VALUES
+                            (@stId, @comp, @sNo, @itemId, @qty)`;
+    
+                for (let i = 0; i < Product_Stock_List.length; i++) {
+                    const product = Product_Stock_List[i];
+
+                    const insertDetailsRequest = new sql.Request(transaction);
+                    insertDetailsRequest.input('stId', ST_Id);
+                    insertDetailsRequest.input('comp', Company_Id);
+                    insertDetailsRequest.input('sNo', i + 1); 
+                    insertDetailsRequest.input('itemId', product.Product_Id);
+                    insertDetailsRequest.input('qty', product.ST_Qty);
+
+                    await insertDetailsRequest.query(insertDetailsQuery);
+                }
+    
+                await transaction.commit();
+                success(res, 'Closing stock updated successfully');
+            } catch (e) {
+                await transaction.rollback();
+                return servError(e, res)
+            }
+        } catch (e) {
+            servError(e, res);
+        }
+    };
+    
+    
 
     // const get
 
@@ -140,6 +232,7 @@ const ClosingStockControll = () => {
         closeingStock,
         getRetailerPreviousClosingStock,
         getClosingStockValues,
+        closeingStockUpdate,
     }
 
 }
