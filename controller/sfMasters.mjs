@@ -26,7 +26,7 @@ const sfMasters = () => {
             let query = `
             SELECT 
             	dm.*,
-            	COALESCE(sm.State_Name, 'State not found') AS State_Name
+            	COALESCE(sm.State_Name, 'Unknown') AS State_Name
             FROM 
             	tbl_Distict_Master AS dm
             LEFT JOIN
@@ -69,6 +69,8 @@ const sfMasters = () => {
             LEFT JOIN
             	tbl_State_Master AS sm
             	ON dm.District_Id = sm.State_Id
+            WHERE
+                am.Area_Name != ''
             `;
             if (Area_Id) {
                 query += `

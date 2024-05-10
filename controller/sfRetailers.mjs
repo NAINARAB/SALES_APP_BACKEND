@@ -329,14 +329,16 @@ const RetailerControll = () => {
             const filetype = req?.file?.mimetype;
             const filesize = req?.file?.size;
 
-            if (!fileName) {
-                return invalidInput(res, 'Retailer Photo is required')
-            }
+            // if (!fileName) {
+            //     return invalidInput(res, 'Retailer Photo is required')
+            // }
 
             const {
-                Retailer_Name, Contact_Person, Mobile_No, Retailer_Channel_Id,
-                Retailer_Class, Route_Id, Area_Id, Reatailer_Address, Reatailer_City, PinCode,
-                State_Id, Sales_Force_Id, Branch_Id, Gstno, Latitude, Longitude, Created_By, Company_Id } = req.body;
+                Retailer_Name, Contact_Person, Mobile_No, Retailer_Channel_Id, PinCode,
+                Retailer_Class, Route_Id, Area_Id, Reatailer_Address, Reatailer_City,
+                State_Id, Branch_Id, Gstno, Latitude, Longitude,
+                Created_By, Company_Id
+            } = req.body;
 
             const insertQuery = `
                 INSERT INTO tbl_Retailers_Master (
@@ -400,25 +402,25 @@ const RetailerControll = () => {
 
             request.input('pincode', PinCode)
             request.input('state', State_Id)
-            request.input('salesforce', Sales_Force_Id)
+            request.input('salesforce', '')
             request.input('branch', Branch_Id)
             request.input('gst', Gstno)
 
             request.input('erp', 0)
-            request.input('lati', Latitude)
-            request.input('long', Longitude)
-            request.input('profile', domain + '/imageURL/retailers/' + fileName)
+            request.input('lati', Latitude ? Latitude : null)
+            request.input('long', Longitude ? Longitude : null)
+            request.input('profile', fileName ? domain + '/imageURL/retailers/' + fileName : null)
             request.input('created', new Date())
 
             request.input('createdby', Created_By)
-            request.input('update', '')
+            request.input('update', new Date())
             request.input('updateby', 0)
             request.input('dflag', 0)
-            request.input('filename', fileName)
+            request.input('filename', fileName ? fileName : null)
 
-            request.input('filepath', filePath)
-            request.input('filetype', filetype)
-            request.input('filesize', filesize)
+            request.input('filepath', filePath ? filePath : null)
+            request.input('filetype', filetype ? filetype : null)
+            request.input('filesize', filesize ? filesize : null)
             request.input('other5', null)
             request.input('company', Company_Id);
 
@@ -442,14 +444,14 @@ const RetailerControll = () => {
             const filetype = req?.file?.mimetype;
             const filesize = req?.file?.size;
 
-            if (!fileName) {
-                return invalidInput(res, 'Retailer Photo is required');
-            }
+            // if (!fileName) {
+            //     return invalidInput(res, 'Retailer Photo is required');
+            // }
 
             const {
                 Retailer_Id, Retailer_Name, Contact_Person, Mobile_No, Retailer_Channel_Id,
                 Retailer_Class, Route_Id, Area_Id, Reatailer_Address, Reatailer_City, PinCode,
-                State_Id, Sales_Force_Id, Gstno, Created_By
+                State_Id, Gstno, Updated_By
             } = req.body;
 
             const updateQuery = `
@@ -469,16 +471,11 @@ const RetailerControll = () => {
                     PinCode = @pincode,
 
                     State_Id = @state,
-                    Sales_Force_Id = @salesforce,
                     Gstno = @gst,
-                    Profile_Pic = @profile,
-                    Updated_Date = @updated,
-
                     Updated_By = @updatedby,
-                    ImageName = @imagename,
-                    ImagePath = @imagepath,
-                    ImageType = @imagetype,
-                    ImageSize = @imagesize
+                    Updated_Date = @updated
+
+                    ${fileName ? ', Profile_Pic = @profile, ImageName = @imagename, ImagePath = @imagepath, ImageType = @imagetype, ImageSize = @imagesize' : ''}
                     
                 WHERE Retailer_Id = @id;
             `;
@@ -498,17 +495,15 @@ const RetailerControll = () => {
 
             request.input('pincode', PinCode)
             request.input('state', State_Id)
-            request.input('salesforce', Sales_Force_Id)
             request.input('gst', Gstno)
-
-            request.input('profile', domain + '/imageURL/retailers/' + fileName)
+            request.input('updatedby', Updated_By)
             request.input('updated', new Date())
-            request.input('updatedby', Created_By)
-            request.input('imagename', fileName)
-            request.input('imagepath', filePath)
 
-            request.input('imagetype', filetype)
-            request.input('imagesize', filesize)
+            request.input('profile', fileName ? domain + '/imageURL/retailers/' + fileName : null)
+            request.input('imagename', fileName ? fileName : null)
+            request.input('imagepath', filePath ? filePath : null)
+            request.input('imagetype', filetype ? filetype : null)
+            request.input('imagesize', filesize ? filesize : null)
 
             const result = await request.query(updateQuery);
 
@@ -529,7 +524,7 @@ const RetailerControll = () => {
         if (isNaN(Retailer_Id)) {
             return invalidInput(res, 'Retailer_Id is required')
         }
-        
+
         try {
             const query = `
             SELECT 
