@@ -42,9 +42,9 @@ const ClosingStockControll = () => {
                 const insertDetailsQuery = `
                     INSERT INTO 
                         tbl_Closing_Stock_Info 
-                            (ST_Id, Company_Id, S_No, Item_Id, ST_Qty)
+                            (ST_Id, Company_Id, S_No, Item_Id, ST_Qty, PR_Qty, LT_CL_Date)
                         VALUES
-                            (@stId, @comp, @sNo, @itemId, @qty);`;
+                            (@stId, @comp, @sNo, @itemId, @qty, @pre, @cl_date)`;
 
                 for (let i = 0; i < Product_Stock_List.length; i++) {
                     const product = Product_Stock_List[i];
@@ -54,6 +54,9 @@ const ClosingStockControll = () => {
                     insertDetailsRequest.input('sNo', i + 1); 
                     insertDetailsRequest.input('itemId', product.Product_Id);
                     insertDetailsRequest.input('qty', product.ST_Qty);
+                    insertDetailsRequest.input('pre', product.PR_Qty || 0);
+                    insertDetailsRequest.input('cl_date', product.LT_CL_Date || new Date());
+
                     await insertDetailsRequest.query(insertDetailsQuery);
                 }
 
@@ -196,9 +199,9 @@ const ClosingStockControll = () => {
                 const insertDetailsQuery = `
                     INSERT INTO 
                         tbl_Closing_Stock_Info 
-                            (ST_Id, Company_Id, S_No, Item_Id, ST_Qty)
+                            (ST_Id, Company_Id, S_No, Item_Id, ST_Qty, PR_Qty, LT_CL_Date)
                         VALUES
-                            (@stId, @comp, @sNo, @itemId, @qty)`;
+                            (@stId, @comp, @sNo, @itemId, @qty, @pre, @cl_date)`;
     
                 for (let i = 0; i < Product_Stock_List.length; i++) {
                     const product = Product_Stock_List[i];
@@ -208,7 +211,9 @@ const ClosingStockControll = () => {
                     insertDetailsRequest.input('comp', Company_Id);
                     insertDetailsRequest.input('sNo', i + 1); 
                     insertDetailsRequest.input('itemId', product.Product_Id);
-                    insertDetailsRequest.input('qty', product.ST_Qty);
+                    insertDetailsRequest.input('qty', product.ST_Qty || 0);
+                    insertDetailsRequest.input('pre', product.PR_Qty || 0);
+                    insertDetailsRequest.input('cl_date', product.LT_CL_Date || new Date());
 
                     await insertDetailsRequest.query(insertDetailsQuery);
                 }

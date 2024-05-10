@@ -1,7 +1,7 @@
-import SFDB from '../dbConfig/connectionPool.mjs';
+import SFDB from '../../dbConfig/connectionPool.mjs';
 import sql from 'mssql';
-import { dataFound, falied, invalidInput, noData, servError, success } from '../sfResFun.mjs'
-import uploadFile from "../uploads/uploadMiddleware.mjs";
+import { dataFound, falied, invalidInput, noData, servError, success } from '../../sfResFun.mjs'
+import uploadFile from "../../uploads/uploadMiddleware.mjs";
 import { createRequire } from 'module';
 import path from "path";
 import fs from 'fs'
@@ -128,7 +128,7 @@ const RetailerControll = () => {
             const result = await request.query(query);
 
             if (result.recordset.length > 0) {
-                dataFound(result.recordset)
+                dataFound(res, result.recordset)
             } else {
                 noData(res)
             }

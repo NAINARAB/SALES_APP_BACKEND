@@ -1,13 +1,13 @@
-import SFDB from '../dbConfig/connectionPool.mjs';
+import SFDB from '../../dbConfig/connectionPool.mjs';
 import sql from 'mssql';
-import { dataFound, falied, invalidInput, noData, servError, success } from '../sfResFun.mjs';
+import { dataFound, falied, invalidInput, noData, servError, success } from '../../sfResFun.mjs';
 import path from "path";
 import fs from 'fs'
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { createRequire } from 'module';
-import uploadFile from '../uploads/uploadMiddleware.mjs'
-import deleteFile from '../uploads/deleteMiddleware.mjs';
+import uploadFile from '../../uploads/uploadMiddleware.mjs'
+import deleteFile from '../../uploads/deleteMiddleware.mjs';
 
 const require = createRequire(import.meta.url);
 require('dotenv').config();
@@ -148,7 +148,7 @@ const sfProductController = () => {
         }
     }
 
-    const postProducts = async (req, res) => {
+    const postProductsWithImage = async (req, res) => {
         try {
             await uploadFile(req, res, 0, 'Product_Image');
             const fileName = req?.file?.filename;
@@ -160,22 +160,21 @@ const sfProductController = () => {
                 return invalidInput(res, 'Product Photo is required')
             }
 
-            const { Product_Name, Short_Name, Product_Description, Brand, Product_Group, UOM, } = req.body;
+            const { Product_Name, Short_Name, Product_Description, Brand, Product_Group, UOM } = req.body;
 
             const getMaxId = await SFDB.query(`SELECT MAX(Product_Id) AS MaxId FROM tbl_Product_Master`);
 
             const MaxId = getMaxId.recordset[0]?.MaxId || 1
 
             const insertQuery = `
-            INSERT INTO 
-                tbl_Product_Master
-                    (Product_Id, Product_Code, Product_Name, Short_Name, Product_Description, Brand, Product_Group, UOM, IS_Sold, Display_Order_By, Product_Image_Name, Product_Image_Type, Product_Image_Size, Product_Image_Path)
-                VALUES 
-                    (@maxid, @code, @name, @short_name, @desc, @brand, @product_group, @uom, @is_sold, @order, @img_name, @img_type, @img_size, @img_path)`;
+            INSERT INTO tbl_Product_Master
+                (Product_Id, Product_Code, Product_Name, Short_Name, Product_Description, Brand, Product_Group, UOM, IS_Sold, Display_Order_By, Product_Image_Name, Product_Image_Type, Product_Image_Size, Product_Image_Path)
+            VALUES 
+                (@maxid, @code, @name, @short_name, @desc, @brand, @product_group, @uom, @is_sold, @order, @img_name, @img_type, @img_size, @img_path)`;
 
             const request = new sql.Request(SFDB);
             request.input('maxid', MaxId);
-            request.input('code', 'ONLINE' + MaxId)
+            request.input('code', 'ONLINE_' + MaxId)
             request.input('name', Product_Name)
             request.input('short_name', Short_Name)
             request.input('desc', Product_Description)
@@ -188,6 +187,45 @@ const sfProductController = () => {
             request.input('img_type', filetype)
             request.input('img_size', filesize)
             request.input('img_path', filePath)
+
+            const result = await request.query(insertQuery);
+
+            if (result.rowsAffected[0] && result.rowsAffected[0] > 0) {
+                success(res, 'New Product Added')
+            } else {
+                falied(res)
+            }
+
+        } catch (e) {
+            servError(e, res);
+        }
+    }
+
+    const postProductsWithoutImage = async (req, res) => {
+        const { Product_Name, Short_Name, Product_Description, Brand, Product_Group, UOM } = req.body;
+
+        try {
+            const getMaxId = await SFDB.query(`SELECT MAX(Product_Id) AS MaxId FROM tbl_Product_Master`);
+
+            const MaxId = getMaxId.recordset[0]?.MaxId || 1
+
+            const insertQuery = `
+            INSERT INTO tbl_Product_Master
+                (Product_Id, Product_Code, Product_Name, Short_Name, Product_Description, Brand, Product_Group, UOM, IS_Sold, Display_Order_By)
+            VALUES 
+                (@maxid, @code, @name, @short_name, @desc, @brand, @product_group, @uom, @is_sold, @order)`;
+
+            const request = new sql.Request(SFDB);
+            request.input('maxid', MaxId);
+            request.input('code', 'ONLINE_' + MaxId)
+            request.input('name', Product_Name)
+            request.input('short_name', Short_Name)
+            request.input('desc', Product_Description)
+            request.input('brand', Brand)
+            request.input('product_group', Product_Group)
+            request.input('uom', UOM)
+            request.input('is_sold', 1)
+            request.input('order', 1)
 
             const result = await request.query(insertQuery);
 
@@ -294,7 +332,8 @@ const sfProductController = () => {
     return {
         getProducts,
         getGroupedProducts,
-        postProducts,
+        postProductsWithImage,
+        postProductsWithoutImage,
         updateProduct,
         updateProductImages
     }

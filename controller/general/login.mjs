@@ -1,6 +1,6 @@
-import SFDB from '../dbConfig/connectionPool.mjs';
+import SFDB from '../../dbConfig/connectionPool.mjs';
 import sql from 'mssql';
-import { dataFound, falied, invalidInput, noData, servError, success } from '../sfResFun.mjs';
+import { dataFound, falied, invalidInput, noData, servError, success } from '../../sfResFun.mjs';
 import CryptoJS from 'crypto-js';
 
 const LoginControl = () => {

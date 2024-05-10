@@ -1,16 +1,17 @@
 import express from "express";
-import RetailerControll from "../controller/sfRetailers.mjs";
-import sfProductController from "../controller/sfProducts.mjs";
-import sfDistributors from "../controller/sfDistributors.mjs";
-import sfRoutes from "../controller/sfRoutes.mjs";
-import sfMasters from "../controller/sfMasters.mjs";
-import LoginControl from "../controller/login.mjs";
+import LoginControl from "../controller/general/login.mjs";
+import closingStock from "../controller/sales/closingStock.mjs";
+import attendance from "../controller/general/attendance.mjs";
+import generalConfig from "../controller/general/generalConfig.mjs";
+
+import RetailerControll from "../controller/masters/sfRetailers.mjs";
+import sfProductController from "../controller/masters/sfProducts.mjs";
+import sfDistributors from "../controller/masters/sfDistributors.mjs";
+import sfRoutes from "../controller/masters/sfRoutes.mjs";
+import sfMasters from "../controller/masters/sfMasters.mjs";
 import userType from "../controller/masters/userType.mjs";
 import userMaster from "../controller/masters/users.mjs";
 import branchController from '../controller/masters/branch.mjs';
-import generalConfig from "../controller/generalConfig.mjs";
-import attendance from "../controller/general/attendance.mjs";
-import closingStock from "../controller/sales/closingStock.mjs";
 
 const SfRouter = express.Router();
 
@@ -19,7 +20,10 @@ SfRouter.post('/api/login', LoginControl.getLogin)
 SfRouter.post('/api/userAuth', LoginControl.getLoginBYAuth)
 
 //Sidebar
-SfRouter.get('/api/sidebar', generalConfig.getSidebarForUser)
+SfRouter.get('/api/sidebar', generalConfig.getSidebarForUser);
+
+//VisitLogs
+SfRouter.post('/api/visitedPlaces', generalConfig.postVisitLogs);
 
 //sfMasters
 SfRouter.get('/api/masters/state', sfMasters.getStates);
@@ -60,8 +64,8 @@ SfRouter.get('/api/masters/custom-users', userMaster.customUserGet)
 
 // retailersApi
 SfRouter.get('/api/masters/retailers', RetailerControll.getSFCustomers);
-SfRouter.get('/api/masters/retailers/dropDown', RetailerControll.getSFCustomers);
-SfRouter.get('/api/masters/retailers/areaRetailers', RetailerControll.getAreaRetailers)
+SfRouter.get('/api/masters/retailers/dropDown', RetailerControll.getRetailerDropDown);
+SfRouter.get('/api/masters/retailers/areaRetailers', RetailerControll.getAreaRetailers);
 SfRouter.get('/api/masters/retailers/productClosingStock', closingStock.getRetailerPreviousClosingStock);
 SfRouter.get('/api/masters/retailers/retailerInfo', RetailerControll.getRetailerInfoWithClosingStock)
 SfRouter.get('/api/transaction/retailers/closingStock', closingStock.getClosingStockValues);
@@ -78,7 +82,8 @@ SfRouter.put('/api/masters/retailerLocation', RetailerControll.verifyLocation)
 // productApi
 SfRouter.get('/api/masters/products', sfProductController.getProducts);
 SfRouter.get('/api/masters/products/grouped', sfProductController.getGroupedProducts);
-SfRouter.post('/api/masters/products', sfProductController.postProducts);
+SfRouter.post('/api/masters/products', sfProductController.postProductsWithImage);
+SfRouter.post('/api/masters/products/withoutImage', sfProductController.postProductsWithImage);
 SfRouter.put('/api/masters/products', sfProductController.updateProduct);
 SfRouter.put('/api/masters/products/productImage', sfProductController.updateProductImages);
 
