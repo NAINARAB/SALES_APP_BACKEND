@@ -47,7 +47,25 @@ const RetailerControll = () => {
                             isActiveLocation = 1
                         FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
                     ), '{}'
-                ) AS VERIFIED_LOCATION
+                ) AS VERIFIED_LOCATION,
+
+                COALESCE((
+                    SELECT
+                    	TOP (5) 
+                        ml.*,
+
+                        COALESCE((
+                            SELECT NAME FROM tbl_Users WHERE UserId = ml.EntryBy
+                        ), 'unknown') AS EntryByGet
+
+                    FROM
+                    	tbl_Retailers_Locations AS ml
+                    WHERE
+                        rm.Retailer_Id = ml.Retailer_Id
+                    ORDER BY
+                        CONVERT(DATETIME, EntryAt) DESC
+                    FOR JSON PATH
+                ), '[]') AS AllLocations
             
             FROM
                 tbl_Retailers_Master AS rm
@@ -85,10 +103,11 @@ const RetailerControll = () => {
                 const defaultImageUrl = domain + '/imageURL/retailers/imageNotFound.jpg';
                 const imageUrl = domain + '/imageURL/retailers/';
                 const parsed = result.recordset.map(o => {
-                    const imagePath = path.join(__dirname, '..', 'uploads', 'retailers', o?.ImageName ? o?.ImageName : '');
+                    const imagePath = path.join(__dirname, '..', '..', 'uploads', 'retailers', o?.ImageName ? o?.ImageName : '');
                     return {
                         ...o,
                         VERIFIED_LOCATION: JSON.parse(o.VERIFIED_LOCATION),
+                        AllLocations: JSON.parse(o.AllLocations),
                         imageUrl:
                             o.ImageName
                                 ? fs.existsSync(imagePath)
@@ -218,7 +237,7 @@ const RetailerControll = () => {
                 const withImage = parsed.map(o => ({
                     ...o,
                     Area_Retailers: o?.Area_Retailers?.map(oo => {
-                        const imagePath = path.join(__dirname, '..', 'uploads', 'retailers', oo?.ImageName ? oo?.ImageName : '');
+                        const imagePath = path.join(__dirname, '..', '..', 'uploads', 'retailers', oo?.ImageName ? oo?.ImageName : '');
                         return {
                             ...oo,
                             imageUrl:
@@ -616,7 +635,7 @@ const RetailerControll = () => {
                 const defaultImageUrl = domain + '/imageURL/retailers/imageNotFound.jpg';
                 const imageUrl = domain + '/imageURL/retailers/';
                 const withImage = result.recordset.map(o => {
-                    const imagePath = path.join(__dirname, '..', 'uploads', 'retailers', o?.ImageName ? o?.ImageName : '');
+                    const imagePath = path.join(__dirname, '..', '..', 'uploads', 'retailers', o?.ImageName ? o?.ImageName : '');
                     return {
                         ...o,
                         VERIFIED_LOCATION: JSON.parse(o.VERIFIED_LOCATION),

@@ -2,6 +2,20 @@ import SFDB from '../../dbConfig/connectionPool.mjs';
 import sql from 'mssql';
 import { dataFound, falied, invalidInput, noData, servError, success } from '../../sfResFun.mjs'
 import uploadFile from '../../uploads/uploadMiddleware.mjs';
+import { createRequire } from 'module';
+import path from "path";
+import fs from 'fs'
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+// import ph from '../../uploads/visitLogs/'
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const require = createRequire(import.meta.url);
+require('dotenv').config();
+
+const domain = process.env.domain
 
 const GeneralApi = () => {
 
@@ -28,14 +42,15 @@ const GeneralApi = () => {
         try {
 
             await uploadFile(req, res, 3, 'Location_Image');
-            const fileName = req?.file?.filename;
-            const filePath = req?.file?.path;
-            const filetype = req?.file?.mimetype;
-            const filesize = req?.file?.size;
-            
-            const { Mode } = req.body;
+            const fileName = req?.file?.filename || null;
+            const filePath = req?.file?.path || null;
+            const filetype = req?.file?.mimetype || null;
+            const filesize = req?.file?.size || null;
 
-            if (isNaN(Mode) || Number(Mode) !== 1 || Number(Mode) !== 2) {
+            const { Mode } = req.body;
+            console.log(req.body);
+
+            if (isNaN(Mode) || (Number(Mode) !== 1 && Number(Mode) !== 2)) {
                 return invalidInput(res, 'Valid API Mode is required');
             }
 
@@ -77,19 +92,10 @@ const GeneralApi = () => {
                 const RetailerInfo = getRetailer.recordset[0];
 
                 request.input('id', Retailer_Id);
-                request.input('name', RetailerInfo?.Reatailer_Name);
+                request.input('name', RetailerInfo?.Retailer_Name);
                 request.input('con_per', RetailerInfo?.Contact_Person);
                 request.input('con_mob', RetailerInfo?.Mobile_No);
                 request.input('add', RetailerInfo?.Reatailer_Address);
-                request.input('lat', Latitude);
-                request.input('long', Longitude);
-                request.input('nar', Narration);
-                request.input('enter', EntryBy);
-                request.input('enter_at', new Date());
-                request.input('img_name', fileName ? fileName : null);
-                request.input('img_path', filePath ? filePath : null);
-                request.input('img_type', filetype ? filetype : null);
-                request.input('img_size', filesize ? filesize : null);
                 request.input('exist', 1);
             }
 
@@ -99,17 +105,18 @@ const GeneralApi = () => {
                 request.input('con_per', Contact_Person);
                 request.input('con_mob', Contact_Mobile);
                 request.input('add', Location_Address);
-                request.input('lat', Latitude);
-                request.input('long', Longitude);
-                request.input('nar', Narration);
-                request.input('enter', EntryBy);
-                request.input('enter_at', new Date());
-                request.input('img_name', fileName ? fileName : null);
-                request.input('img_path', filePath ? filePath : null);
-                request.input('img_type', filetype ? filetype : null);
-                request.input('img_size', filesize ? filesize : null);
                 request.input('exist', 0);
             }
+
+            request.input('lat', Latitude);
+            request.input('long', Longitude);
+            request.input('nar', Narration);
+            request.input('enter', EntryBy);
+            request.input('enter_at', new Date());
+            request.input('img_name', fileName);
+            request.input('img_path', filePath);
+            request.input('img_type', filetype);
+            request.input('img_size', filesize);
 
             const result = await request.query(query);
 
@@ -124,10 +131,65 @@ const GeneralApi = () => {
         }
     }
 
+    const getVisitedLogs = async (req, res) => {
+        const { reqDate, UserId } = req.query;
+
+        try {
+            let query = `
+            SELECT
+            	logs.*,
+            	COALESCE((
+            		SELECT
+            			Name
+            		FROM
+            			tbl_Users
+            		WHERE
+            			UserId = logs.EntryBy
+            	), 'NOT FOUND') AS EntryByGet
+            FROM
+            	tbl_Daily_Call_Log AS logs
+            WHERE 
+                CONVERT(DATE, logs.EntryAt) = CONVERT(DATE, @reqDate)`;
+
+            if (UserId) {
+                query += `AND logs.EntryBy = @entry`
+            }
+
+            
+            const request = new sql.Request(SFDB);
+            request.input('reqDate', reqDate || new Date());
+            request.input('entry', UserId);
+
+            const result = await request.query(query);
+
+            if (result.recordset.length > 0) {
+                const defaultImageUrl = domain + '/imageURL/visitedPlace/imageNotFound.jpg';
+                const imageUrl = domain + '/imageURL/visitedPlace/';
+                const withImage = result.recordset.map(o => {
+                    const imagePath = path.join(__dirname, '..', '..', 'uploads', 'visitLogs', o?.ImageName ? o?.ImageName : '');
+                    return {
+                        ...o,
+                        imageUrl:
+                            o.ImageName
+                                ? fs.existsSync(imagePath)
+                                    ? imageUrl + o?.ImageName
+                                    : defaultImageUrl
+                                : defaultImageUrl
+                    }
+                });
+                dataFound(res, withImage)
+            } else {
+                noData(res)
+            }
+        } catch (e) {
+            servError(e, res);
+        }
+    }
+
     return {
         getSidebarForUser,
         postVisitLogs,
-
+        getVisitedLogs,
     }
 }
 

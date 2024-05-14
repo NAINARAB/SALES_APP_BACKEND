@@ -85,7 +85,6 @@ const LoginControl = () => {
     }
 
 
-
     return {
         getLogin,
         getLoginBYAuth

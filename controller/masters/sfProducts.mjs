@@ -63,7 +63,7 @@ const sfProductController = () => {
                 const defaultImageUrl = domain + '/imageURL/products/imageNotFound.jpg';
                 const withPic = result.recordset.map(o => {
                     const imageUrl = domain + '/imageURL/products/' + o?.Product_Image_Name;
-                    const imagePath = path.join(__dirname, '..', 'uploads', 'products', o?.Product_Image_Name ? o?.Product_Image_Name : '');
+                    const imagePath = path.join(__dirname, '..', '..', 'uploads', 'products', o?.Product_Image_Name ? o?.Product_Image_Name : '');
                     return {
                         ...o,
                         productImageUrl:

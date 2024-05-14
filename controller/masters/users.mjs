@@ -36,7 +36,7 @@ const userMaster = () => {
         const { Company_id } = req.query;
         
         if (isNaN(Company_id)) {
-            invalidInput(res, 'Company_id is required');
+            return invalidInput(res, 'Company_id is required');
         }
 
         try {
@@ -56,6 +56,44 @@ const userMaster = () => {
 
             WHERE
             	c.Company_id = '${Company_id}'`;
+            
+            const result = await SFDB.query(query);
+
+            if (result.recordset.length > 0) {
+                dataFound(res, result.recordset)
+            } else {
+                noData(res)
+            }
+        } catch (e) {
+            servError(e, res);
+        }
+    }
+
+    const salesPersonDropDown = async (req, res) => {
+        const { Company_id } = req.query;
+        
+        if (isNaN(Company_id)) {
+            return invalidInput(res, 'Company_id is required');
+        }
+
+        try {
+            const query = `
+            SELECT
+                u.UserId,
+            	u.Name
+            FROM
+            	tbl_Users AS u
+
+            	JOIN tbl_Branch_Master AS b
+            	ON b.BranchId = u.BranchId
+
+            	JOIN tbl_Company_Master AS c
+            	ON c.Company_id = b.Company_id
+
+            WHERE
+            	c.Company_id = '${Company_id}'
+                AND
+                u.UserTypeId = 6`;
             
             const result = await SFDB.query(query);
 
@@ -202,6 +240,7 @@ const userMaster = () => {
         editUser,
         deleteUser,
         userDropDown,
+        salesPersonDropDown,
     }
 }
 

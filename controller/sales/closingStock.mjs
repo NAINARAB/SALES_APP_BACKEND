@@ -123,7 +123,7 @@ const ClosingStockControll = () => {
             	    WHERE
             	    	St_Id = csgi.ST_Id
             	    FOR JSON PATH
-            	), '[]') AS ProductCount,
+            	), '[]') AS ProductCount
                 
             FROM
             	tbl_Closing_Stock_Gen_Info AS csgi

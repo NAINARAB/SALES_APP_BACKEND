@@ -23,7 +23,9 @@ SfRouter.post('/api/userAuth', LoginControl.getLoginBYAuth)
 SfRouter.get('/api/sidebar', generalConfig.getSidebarForUser);
 
 //VisitLogs
+SfRouter.get('/api/visitedPlaces', generalConfig.getVisitedLogs);
 SfRouter.post('/api/visitedPlaces', generalConfig.postVisitLogs);
+
 
 //sfMasters
 SfRouter.get('/api/masters/state', sfMasters.getStates);
@@ -57,7 +59,8 @@ SfRouter.post('/api/masters/users', userMaster.postUser);
 SfRouter.put('/api/masters/users', userMaster.editUser);
 SfRouter.delete('/api/masters/users', userMaster.deleteUser);
 SfRouter.get('/api/masters/users/dropDown', userMaster.userDropDown);
-SfRouter.get('/api/masters/custom-users', userMaster.customUserGet)
+SfRouter.get('/api/masters/custom-users', userMaster.customUserGet);
+SfRouter.get('/api/masters/users/salesPerson/dropDown', userMaster.salesPersonDropDown)
 
 
 
@@ -104,6 +107,8 @@ SfRouter.put('/api/attendance', attendance.closeAttendance);
 SfRouter.delete('/api/attendance', attendance.closeAttendance)
 
 SfRouter.get('/api/myTodayAttendance', attendance.getMyTodayAttendance);
+
+SfRouter.get('/api/myAttendanceHistory', attendance.getAttendanceHistory)
 
 SfRouter.get('/api/getMyLastAttendance', attendance.getMyLastAttendanceOfToday);
 

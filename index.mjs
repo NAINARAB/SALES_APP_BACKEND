@@ -5,6 +5,8 @@ import { dirname } from 'path';
 import cors from 'cors'
 import { createRequire } from 'module';
 import SfRouter from './routes/routes.mjs';
+import morgan from 'morgan';
+import fs from 'fs';
 
 const require = createRequire(import.meta.url);
 require('dotenv').config();
@@ -12,7 +14,6 @@ require('dotenv').config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
 
 const app = express();
 app.use(cors());
@@ -22,7 +23,11 @@ app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
-app.use(SfRouter)
+app.use(SfRouter);
+
+
+// const logStream = fs.createWriteStream(path.join(__dirname, 'logs', 'access.log'), { flags: 'a' });
+app.use(morgan('dev'));
 
 
 const productsStaticPath = path.join(__dirname, 'uploads', 'products');

@@ -1,0 +1,4 @@
+[0mGET /api/userAuth?Auth=7620E6303A7E40FCBFAC8004F8D01BD5 [33m404[0m 1.290 ms - 151[0m
+[0mGET /api/userAuth?Auth=7620E6303A7E40FCBFAC8004F8D01BD5 [33m404[0m 0.546 ms - 151[0m
+[0mGET /favicon.ico [33m404[0m 0.900 ms - 150[0m
+[0mGET /api/visitedPlaces [33m404[0m 1.617 ms - 156[0m
