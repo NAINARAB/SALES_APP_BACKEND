@@ -26,7 +26,8 @@ app.get('/', (req, res) => {
 app.use(SfRouter);
 
 
-// const logStream = fs.createWriteStream(path.join(__dirname, 'logs', 'access.log'), { flags: 'a' });
+const logStream = fs.createWriteStream(path.join(__dirname, 'logs', 'access.log'), { flags: 'a' });
+app.use(morgan('dev', { stream: logStream}));
 app.use(morgan('dev'));
 
 

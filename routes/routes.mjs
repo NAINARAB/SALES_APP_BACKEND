@@ -12,6 +12,7 @@ import sfMasters from "../controller/masters/sfMasters.mjs";
 import userType from "../controller/masters/userType.mjs";
 import userMaster from "../controller/masters/users.mjs";
 import branchController from '../controller/masters/branch.mjs';
+import SaleOrder from '../controller/sales/saleOrderCreation.mjs'
 
 const SfRouter = express.Router();
 
@@ -71,6 +72,7 @@ SfRouter.get('/api/masters/retailers/dropDown', RetailerControll.getRetailerDrop
 SfRouter.get('/api/masters/retailers/areaRetailers', RetailerControll.getAreaRetailers);
 SfRouter.get('/api/masters/retailers/productClosingStock', closingStock.getRetailerPreviousClosingStock);
 SfRouter.get('/api/masters/retailers/retailerInfo', RetailerControll.getRetailerInfoWithClosingStock)
+SfRouter.get('/api/masters/retailers/retaileDetails', RetailerControll.getRetailerInfo)
 SfRouter.get('/api/transaction/retailers/closingStock', closingStock.getClosingStockValues);
 
 SfRouter.post('/api/masters/retailers', RetailerControll.addRetailers);
@@ -119,7 +121,12 @@ SfRouter.get('/api/getMyLastAttendance', attendance.getMyLastAttendanceOfToday);
 SfRouter.post('/api/masters/retailers/closingStock', closingStock.closeingStock);
 SfRouter.put('/api/masters/retailers/closingStock', closingStock.closeingStockUpdate);
 
+SfRouter.get('/api/masters/retailers/closingStock/myEntry', closingStock.getSalesPersonEnteredClosingStock);
 
+
+// sales order creation 
+
+SfRouter.post('/api/sales/saleOrder', SaleOrder.saleOrderCreation);
 
 
 export default SfRouter;

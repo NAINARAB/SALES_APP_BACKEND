@@ -51,13 +51,16 @@ const sfProductController = () => {
             SELECT 
             	p.*,
             	b.Brand_Name,
-            	pg.Pro_Group
+            	pg.Pro_Group,
+				COALESCE(r.Product_Rate, 0) AS Item_Rate 
             FROM 
             	tbl_Product_Master AS p
             	LEFT JOIN tbl_Brand_Master AS b
             	ON b.Brand_Id = p.Brand
             	LEFT JOIN tbl_Product_Group AS pg
-            	ON pg.Pro_Group_Id = p.Product_Group`);
+            	ON pg.Pro_Group_Id = p.Product_Group
+				LEFT JOIN tbl_Pro_Rate_Master AS r
+				ON r.Product_Id = p.Product_Id`);
 
             if (result.recordset.length) {
                 const defaultImageUrl = domain + '/imageURL/products/imageNotFound.jpg';
@@ -91,18 +94,21 @@ const sfProductController = () => {
                     g.*,
                     COALESCE((
                         SELECT 
-                            Product_Id,
-                            Product_Code,
-                            Product_Name,
-                            Short_Name,
-                            Product_Description,
-                            Brand,
-                            UOM,
-                            Product_Image_Name
+                            p.Product_Id,
+                            p.Product_Code,
+                            p.Product_Name,
+                            p.Short_Name,
+                            p.Product_Description,
+                            p.Brand,
+                            p.UOM,
+                            p.Product_Image_Name,
+
+                            COALESCE((SELECT Product_Rate FROM tbl_Pro_Rate_Master WHERE Product_Id = p.Product_Id), 0) AS Item_Rate
+                            
                         FROM 
-                            tbl_Product_Master
+                            tbl_Product_Master AS p
                         WHERE
-                            g.Pro_Group_Id = Product_Group
+                            g.Pro_Group_Id = p.Product_Group
                         FOR JSON PATH
                     ), '[]') AS GroupedProductArray
                 FROM

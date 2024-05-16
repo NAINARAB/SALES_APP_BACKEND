@@ -105,14 +105,14 @@ const ClosingStockControll = () => {
     }
 
     const getClosingStockValues = async (req, res) => {
-        const { Retailer_Id } = req.query;
+        const { Retailer_Id, Created_by } = req.query;
 
         if (isNaN(Retailer_Id)) {
             return invalidInput(res, 'Retailer_Id is required');
         }
 
         try {
-            const query = `
+            let query = `
             SELECT 
             	csgi.*,
             	COALESCE((
@@ -130,8 +130,67 @@ const ClosingStockControll = () => {
             WHERE 
                 csgi.Retailer_Id = @retailer_Id`;
 
+            if (Number(Created_by) > 0) {
+                query += `AND csgi.Created_by = @Created_by`
+            }
+
             const request = new sql.Request(SFDB);
             request.input('retailer_Id', Retailer_Id);
+            request.input('Created_by', Created_by)
+
+            const result = await request.query(query);
+
+            if (result.recordset.length > 0) {
+                const parsed = result.recordset.map(o => ({
+                    ...o,
+                    ProductCount: JSON.parse(o?.ProductCount)
+                }))
+                dataFound(res, parsed);
+            } else {
+                noData(res)
+            }
+        } catch (e) {
+            servError(e, res);
+        }
+    }
+
+    const getSalesPersonEnteredClosingStock = async (req, res) => {
+        const { UserId, reqDate } = req.query;
+
+        if (isNaN(UserId)) {
+            return invalidInput(res, 'UserId is required, reqDate is optional');
+        }
+
+        try {
+            const query = `
+            SELECT 
+            	csgi.*,
+                
+            	COALESCE((
+            	    SELECT
+            	    	csi.*,
+						COALESCE((
+							SELECT Product_Name FROM tbl_Product_Master WHERE Product_Id = csi.Item_Id
+						), 'unknown') AS Product_Name
+            	    FROM
+            	    	tbl_Closing_Stock_Info AS csi
+            	    WHERE
+            	    	csi.St_Id = csgi.ST_Id
+            	    FOR JSON PATH
+            	), '[]') AS ProductCount,
+
+				COALESCE((SELECT Retailer_Name FROM tbl_Retailers_Master WHERE Retailer_Id = csgi.Retailer_Id), 'unknown') AS Retailer_Name
+                
+            FROM
+            	tbl_Closing_Stock_Gen_Info AS csgi
+            WHERE 
+                csgi.Created_by = @Created_by
+                AND
+                CONVERT(DATE, csgi.ST_Date) = CONVERT(DATE, @reqDate)`;
+
+            const request = new sql.Request(SFDB);
+            request.input('Created_by', UserId);
+            request.input('reqDate', reqDate ? reqDate : new Date())
 
             const result = await request.query(query);
 
@@ -237,6 +296,7 @@ const ClosingStockControll = () => {
         closeingStock,
         getRetailerPreviousClosingStock,
         getClosingStockValues,
+        getSalesPersonEnteredClosingStock,
         closeingStockUpdate,
     }
 
