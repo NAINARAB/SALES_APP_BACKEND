@@ -7,13 +7,13 @@ import path from "path";
 import fs from 'fs'
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import copyImageMiddleware from '../../uploads/copyMiddleware.mjs';
 
 const require = createRequire(import.meta.url);
 require('dotenv').config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
 
 
 const RetailerControll = () => {
@@ -760,9 +760,126 @@ const RetailerControll = () => {
         }
     }
 
-    // const convertVisitLogToRetailer = async (req, res) => {
-    //     const { }
-    // }
+    const convertVisitLogToRetailer = async (req, res) => {
+
+        try {
+            const {
+                Retailer_Name, Contact_Person, Mobile_No, Retailer_Channel_Id, PinCode,
+                Retailer_Class, Route_Id, Area_Id, Reatailer_Address, Reatailer_City,
+                State_Id, Branch_Id, Gstno, Latitude, Longitude,
+                Created_By, Company_Id, fileName, fileType, fileSize, visitLogID
+            } = req.body;
+
+            const sourcearea = path.join(__dirname, '..', '..', 'uploads', 'visitLogs');
+            const destination = path.join(__dirname, '..', '..', 'uploads', 'retailers');
+
+            const copyedFileName = fileName ? (await copyImageMiddleware(sourcearea, destination, fileName)) : null;
+
+            const insertQuery = `
+                INSERT INTO tbl_Retailers_Master (
+                    Retailer_Code,
+                    Retailer_Name, 
+                    Contact_Person, 
+                    Mobile_No, 
+                    Retailer_Channel_Id, 
+                    
+                    Retailer_Class, 
+                    Route_Id,
+                    Area_Id,
+                    Reatailer_Address,
+                    Reatailer_City,
+                    
+                    PinCode,
+                    State_Id,
+                    Sales_Force_Id,
+                    Branch_Id,
+                    Gstno,
+                    
+                    ERP_Id,
+                    Latitude,
+                    Longitude,
+                    Profile_Pic,
+                    Created_Date,
+                    
+                    Created_By,
+                    Updated_Date,
+                    Updated_By,
+                    Del_Flag,
+                    ImageName,
+                    
+                    ImagePath,
+                    ImageType,
+                    ImageSize,
+                    Company_Id 
+                ) VALUES (
+                    @code, @rname, @cperson, @mobile, @channel, 
+                    @rclass, @route, @area, @address, @city, 
+                    @pincode, @state, @salesforce, @branch, @gst, 
+                    @erp, @lati, @long, @profile, @created, 
+                    @createdby, @update, @updateby, @dflag, @filename, 
+                    @filepath, @filetype, @filesize, @company 
+                );
+
+                SELECT SCOPE_IDENTITY() AS Retailer_Id
+            `;
+
+            const request = new sql.Request(SFDB)
+            request.input('code', 0);
+            request.input('rname', Retailer_Name);
+            request.input('cperson', Contact_Person)
+            request.input('mobile', Mobile_No)
+            request.input('channel', Retailer_Channel_Id)
+
+            request.input('rclass', Retailer_Class)
+            request.input('route', Route_Id)
+            request.input('area', Area_Id)
+            request.input('address', Reatailer_Address)
+            request.input('city', Reatailer_City)
+
+            request.input('pincode', PinCode)
+            request.input('state', State_Id)
+            request.input('salesforce', '')
+            request.input('branch', Branch_Id)
+            request.input('gst', Gstno)
+
+            request.input('erp', 0)
+            request.input('lati', Latitude ? Latitude : null)
+            request.input('long', Longitude ? Longitude : null)
+            request.input('profile', fileName ? domain + '/imageURL/retailers/' + fileName : null)
+            request.input('created', new Date())
+
+            request.input('createdby', Created_By)
+            request.input('update', new Date())
+            request.input('updateby', 0)
+            request.input('dflag', 0)
+            request.input('filename', fileName ? fileName : null)
+
+            request.input('filepath', copyedFileName ? copyedFileName : null)
+            request.input('filetype', fileType ? fileType : null)
+            request.input('filesize', fileSize ? fileSize : null)
+            request.input('company', Company_Id);
+
+            const result = await request.query(insertQuery);
+
+            if (result.rowsAffected[0] && result.rowsAffected[0] > 0) {
+                console.log(result.recordset[0]?.Retailer_Id);
+                await SFDB.query(`
+                    UPDATE 
+                        tbl_Daily_Call_Log 
+                    SET 
+                        IsExistingRetailer = 1, 
+                        Retailer_Id = '${result.recordset[0]?.Retailer_Id}' 
+                    WHERE 
+                        Id = '${visitLogID}'`
+                )
+                return success(res, 'New Customer Added');
+            } else {
+                return falied(res, 'Failed to create customer')
+            }
+        } catch (e) {
+            servError(e, res);
+        }
+    }
 
     return {
         getSFCustomers,
@@ -774,6 +891,7 @@ const RetailerControll = () => {
         putRetailers,
         getRetailerInfo,
         getRetailerInfoWithClosingStock,
+        convertVisitLogToRetailer,
     }
 }
 

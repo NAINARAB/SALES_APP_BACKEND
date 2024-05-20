@@ -77,6 +77,7 @@ SfRouter.get('/api/transaction/retailers/closingStock', closingStock.getClosingS
 
 SfRouter.post('/api/masters/retailers', RetailerControll.addRetailers);
 SfRouter.post('/api/masters/retailerLocation', RetailerControll.postLocationForCustomer)
+SfRouter.post('/api/masters/retailer/convertAsRetailer', RetailerControll.convertVisitLogToRetailer)
 
 SfRouter.put('/api/masters/retailers', RetailerControll.putRetailers);
 SfRouter.put('/api/masters/retailerLocation', RetailerControll.verifyLocation)
