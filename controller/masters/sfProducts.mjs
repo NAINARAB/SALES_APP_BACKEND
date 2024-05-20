@@ -46,8 +46,14 @@ const sfProductController = () => {
 
     const getProducts = async (req, res) => {
 
+        const { Company_Id } = req.query;
+
+        if (isNaN(Company_Id)) {
+            return invalidInput(res, 'Company_Id is required');
+        }
+
         try {
-            const result = await SFDB.query(`
+            const query = `
             SELECT 
             	p.*,
             	b.Brand_Name,
@@ -60,8 +66,15 @@ const sfProductController = () => {
             	LEFT JOIN tbl_Product_Group AS pg
             	ON pg.Pro_Group_Id = p.Product_Group
 				LEFT JOIN tbl_Pro_Rate_Master AS r
-				ON r.Product_Id = p.Product_Id`);
+				ON r.Product_Id = p.Product_Id
+            WHERE
+                p.Company_Id = @company`;
 
+            const request = new sql.Request(SFDB);
+            request.input('company', Company_Id);
+
+            const result = await request.query(query);
+            
             if (result.recordset.length) {
                 const defaultImageUrl = domain + '/imageURL/products/imageNotFound.jpg';
                 const withPic = result.recordset.map(o => {
@@ -87,37 +100,39 @@ const sfProductController = () => {
     }
 
     const getGroupedProducts = async (req, res) => {
+        const { Company_Id } = req.query;
+
+        if (isNaN(Company_Id)) {
+            return invalidInput(res, 'Company_Id is required');
+        }
 
         try {
-            const result = await SFDB.query(`
-                SELECT 
-                    g.*,
-                    COALESCE((
-                        SELECT 
-                            p.Product_Id,
-                            p.Product_Code,
-                            p.Product_Name,
-                            p.Short_Name,
-                            p.Product_Description,
-                            p.Brand,
-                            p.UOM,
-                            p.Product_Image_Name,
+            const query = `
+            SELECT 
+                g.*,
+                COALESCE((
+                    SELECT 
+                        p.*,
+                        COALESCE((SELECT Product_Rate FROM tbl_Pro_Rate_Master WHERE Product_Id = p.Product_Id), 0) AS Item_Rate
+                        
+                    FROM 
+                        tbl_Product_Master AS p
+                    WHERE
+                        g.Pro_Group_Id = p.Product_Group
+                    FOR JSON PATH
+                ), '[]') AS GroupedProductArray
+            FROM
+                tbl_Product_Group AS g
+            WHERE
+                g.Pro_Group_Id != 0 
+                AND
+                g.Company_Id = @comp
+            ORDER BY 
+                g.Pro_Group_Id`;
 
-                            COALESCE((SELECT Product_Rate FROM tbl_Pro_Rate_Master WHERE Product_Id = p.Product_Id), 0) AS Item_Rate
-                            
-                        FROM 
-                            tbl_Product_Master AS p
-                        WHERE
-                            g.Pro_Group_Id = p.Product_Group
-                        FOR JSON PATH
-                    ), '[]') AS GroupedProductArray
-                FROM
-                    tbl_Product_Group AS g
-                WHERE
-                    g.Pro_Group_Id != 0 
-                ORDER BY 
-                    g.Pro_Group_Id
-            `)
+            const request = new sql.Request(SFDB);
+            request.input('comp', Company_Id);
+            const result = await request.query(query);
 
             if (result.recordset.length > 0) {
 

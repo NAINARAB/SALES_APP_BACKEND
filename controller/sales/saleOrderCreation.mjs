@@ -1,6 +1,6 @@
 import sql from 'mssql'
 import SFDB from '../../dbConfig/connectionPool.mjs'
-import { falied, invalidInput, servError, success } from '../../sfResFun.mjs';
+import { dataFound, falied, invalidInput, noData, servError, success } from '../../sfResFun.mjs';
 
 
 const SaleOrder = () => {
@@ -20,10 +20,10 @@ const SaleOrder = () => {
                 return falied(res, 'Invalid Company')
             }
 
-            const saleOrderId = await SFDB.query(`SELECT COALESCE(MAX(Sales_Order_Id), 1) AS Max_Id FROM tbl_Sales_Order_Gen_Info WHERE Company_Id = '${Company_Id}'`);
+            const saleOrderId = await SFDB.query(`SELECT COALESCE(MAX(Sales_Order_Id), 0) AS Max_Id FROM tbl_Sales_Order_Gen_Info WHERE Company_Id = '${Company_Id}'`);
 
             const Company_Code = companyGet.recordset[0].Company_Code;
-            const Sales_Order_Id = saleOrderId.recordset[0].Max_Id;
+            const Sales_Order_Id = Number(saleOrderId.recordset[0].Max_Id) + 1;
 
             const paddedOrderId = Sales_Order_Id.toString().padStart(7, '0');
 
@@ -83,8 +83,8 @@ const SaleOrder = () => {
                     request2.input('Sales_Order_Id', OrderId);
                     request2.input('S_No', i + 1);
                     request2.input('Item_Id', product.Item_Id);
-                    request2.input('Bill_Qty', product.Bill_Qty);
-                    request2.input('Item_Rate', product.Item_Rate);
+                    request2.input('Bill_Qty', Number(product.Bill_Qty));
+                    request2.input('Item_Rate', Number(product.Item_Rate));
                     request2.input('Free_Qty', 0);
                     request2.input('Total_Qty', product.Bill_Qty);
                     request2.input('Amount', parseInt(product?.Bill_Qty) * Number(product?.Item_Rate));
@@ -109,8 +109,42 @@ const SaleOrder = () => {
 
     }
 
+    const getSaleOrder = async (req, res) => {
+        const { Company_Id, Fromdate, Todate, Retailer_Id } = req.query;
+
+        if (isNaN(Company_Id)) {
+            return invalidInput(res, 'Company_Id is required');
+        }
+
+        try {
+            const query = `
+            SELECT 
+                so.*
+            FROM 
+                tbl_Sales_Order_Gen_Info AS so
+            WHERE
+                so.Company_Id = @comp
+                
+            `
+
+            const request = new sql.Request(SFDB);
+            request.input('comp', Company_Id);
+
+            const result = await request.query(query);
+
+            if (result.recordset.length > 0) {
+                dataFound(res, result.recordset);
+            } else {
+                noData(res)
+            }
+        } catch (e) {
+            servError(e, res);
+        }
+    }
+
     return {
         saleOrderCreation,
+        getSaleOrder,
     }
 }
 

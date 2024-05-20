@@ -14,8 +14,10 @@ require('dotenv').config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+
+
 const RetailerControll = () => {
-    const domain = process.env.domain
+    const domain = process.env.domain;
 
     const getSFCustomers = async (req, res) => {
         const { Company_Id } = req.query;
@@ -757,6 +759,10 @@ const RetailerControll = () => {
             servError(e, res);
         }
     }
+
+    // const convertVisitLogToRetailer = async (req, res) => {
+    //     const { }
+    // }
 
     return {
         getSFCustomers,
