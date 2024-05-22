@@ -12,7 +12,7 @@ import sfMasters from "../controller/masters/sfMasters.mjs";
 import userType from "../controller/masters/userType.mjs";
 import userMaster from "../controller/masters/users.mjs";
 import branchController from '../controller/masters/branch.mjs';
-import SaleOrder from '../controller/sales/saleOrderCreation.mjs'
+import SaleOrder from '../controller/sales/saleOrderCreation.mjs';
 
 const SfRouter = express.Router();
 
@@ -33,7 +33,7 @@ SfRouter.get('/api/masters/state', sfMasters.getStates);
 
 SfRouter.get('/api/masters/district', sfMasters.getDistricts);
 
-SfRouter.get('/api/masters/areas', sfMasters.getAreas);
+SfRouter.get('/api/masters/branch', sfMasters.getAreas);
 
 SfRouter.get('/api/masters/outlets', sfMasters.getOutlet);
 
@@ -127,7 +127,9 @@ SfRouter.get('/api/masters/retailers/closingStock/myEntry', closingStock.getSale
 
 // sales order creation 
 
+SfRouter.get('/api/sales/saleOrder', SaleOrder.getSaleOrder);
 SfRouter.post('/api/sales/saleOrder', SaleOrder.saleOrderCreation);
+SfRouter.put('/api/sales/saleOrder', SaleOrder.editSaleOrder);
 
 
 export default SfRouter;

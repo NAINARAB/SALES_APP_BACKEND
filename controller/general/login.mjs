@@ -15,11 +15,38 @@ const LoginControl = () => {
             const decrypt = CryptoJS.AES.decrypt(Password, 'ly4@&gr$vnh905RyB>?%#@-(KSMT');
             const decryptedText = decrypt.toString(CryptoJS.enc.Utf8);
 
+            const query = `
+            SELECT
+            	u.UserTypeId,
+            	u.UserId,
+            	u.UserName,
+            	u.Password,
+            	u.BranchId,
+            	b.BranchName,
+            	u.Name,
+            	ut.UserType,
+            	u.Autheticate_Id,
+            	u.Company_Id AS Company_id,
+            	c.Company_Name
+
+            FROM tbl_Users AS u
+
+            LEFT JOIN tbl_Branch_Master AS b
+            ON b.BranchId = u.BranchId
+
+            LEFT JOIN tbl_User_Type AS ut
+            ON ut.Id = u.UserTypeId
+
+            LEFT JOIN tbl_Company_Master AS c
+            ON c.Company_id = u.Company_Id
+
+            WHERE UserName = @UserName AND Password = @Password AND UDel_Flag= 0`;
+
             const loginSP = new sql.Request(SFDB);
-            loginSP.input('UserName', UserName);
+            loginSP.input('UserName', String(UserName).trim());
             loginSP.input('Password', decryptedText);
 
-            const result = await loginSP.execute('Qry_GetUser');
+            const result = await loginSP.query(query);
 
             if (result.recordset.length > 0) {
                 dataFound(res, result.recordset, 'Login Successfully')
@@ -40,34 +67,31 @@ const LoginControl = () => {
 
         try {
             const query = `
-                SELECT
-                    u.*,
-                    COALESCE(
-                        ut.UserType,
-                        'UnKnown UserType'
-                    ) AS UserType,
-                    COALESCE(
-                        b.BranchName,
-                        'Unknown Branch'
-                    ) AS BranchName,
-                    COALESCE(
-                        c.Company_id,
-                        '0'
-                    ) AS Company_id
-                FROM 
-                    tbl_Users AS u
-                LEFT JOIN
-                    tbl_User_Type AS ut
-                    ON ut.Id = u.UserTypeId
-                LEFT JOIN
-                    tbl_Branch_Master AS b
-                    ON b.BranchId = u.BranchId
-                LEFT JOIN
-                    tbl_Company_Master AS c
-                    ON c.Company_id = b.Company_id
+            SELECT
+                u.UserTypeId,
+                u.UserId,
+                u.UserName,
+                u.Password,
+                u.BranchId,
+                b.BranchName,
+                u.Name,
+                ut.UserType,
+                u.Autheticate_Id,
+                u.Company_Id AS Company_id,
+                c.Company_Name
 
-                WHERE
-                  Autheticate_Id = @auth`;
+            FROM tbl_Users AS u
+
+            LEFT JOIN tbl_Branch_Master AS b
+            ON b.BranchId = u.BranchId
+
+            LEFT JOIN tbl_User_Type AS ut
+            ON ut.Id = u.UserTypeId
+
+            LEFT JOIN tbl_Company_Master AS c
+            ON c.Company_id = u.Company_Id
+
+            WHERE u.Autheticate_Id = @auth AND UDel_Flag= 0`;
 
             const request = new sql.Request(SFDB);
             request.input('auth', Auth)

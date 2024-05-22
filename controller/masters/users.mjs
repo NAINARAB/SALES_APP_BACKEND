@@ -216,9 +216,14 @@ const userMaster = () => {
     }
 
     const userDropDown = async (req, res) => {
+        const { Company_id } = req.query;
+
+        if (isNaN(Company_id)) {
+            return invalidInput(res, 'Company_id is required');
+        }
 
         try {
-            const result = await SFDB.query('SELECT UserId, Name FROM tbl_Users WHERE UDel_Flag = 0 AND UserId != 0');
+            const result = await SFDB.query(`SELECT UserId, Name FROM tbl_Users WHERE UDel_Flag = 0 AND UserId != 0 AND Company_Id = '${Company_id}'`);
 
             if (result.recordset.length > 0) {
                 result.recordset.map(o => {

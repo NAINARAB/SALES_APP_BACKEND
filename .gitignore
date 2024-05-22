@@ -1,6 +1,10 @@
 /node_modules
 /package-lock.json
 .env
-/uploads/attendance
-/uploads/products
-/uploads/retailers
+# /uploads/attendance
+# /uploads/products
+# /uploads/retailers
+
+/frontend
+
+/logs
