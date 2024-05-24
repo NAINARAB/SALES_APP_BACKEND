@@ -60,15 +60,23 @@ const sfProductController = () => {
             	p.*,
             	b.Brand_Name,
             	pg.Pro_Group,
-				COALESCE(r.Product_Rate, 0) AS Item_Rate 
+                COALESCE((
+                    SELECT 
+                        TOP (1) Product_Rate 
+                    FROM 
+                        tbl_Pro_Rate_Master 
+                    WHERE 
+                        Product_Id = p.Product_Id
+                    ORDER BY
+                        CONVERT(DATETIME, Rate_Date) DESC
+                ), 0) AS Item_Rate
+
             FROM 
             	tbl_Product_Master AS p
             	LEFT JOIN tbl_Brand_Master AS b
             	ON b.Brand_Id = p.Brand
             	LEFT JOIN tbl_Product_Group AS pg
             	ON pg.Pro_Group_Id = p.Product_Group
-				LEFT JOIN tbl_Pro_Rate_Master AS r
-				ON r.Product_Id = p.Product_Id
             WHERE
                 p.Company_Id = @company`;
 
@@ -115,7 +123,16 @@ const sfProductController = () => {
                 COALESCE((
                     SELECT 
                         p.*,
-                        COALESCE((SELECT Product_Rate FROM tbl_Pro_Rate_Master WHERE Product_Id = p.Product_Id), 0) AS Item_Rate
+                        COALESCE((
+                            SELECT 
+                                TOP (1) Product_Rate 
+                            FROM 
+                                tbl_Pro_Rate_Master 
+                            WHERE 
+                                Product_Id = p.Product_Id
+                            ORDER BY
+                                CONVERT(DATETIME, Rate_Date) DESC
+                        ), 0) AS Item_Rate
                         
                     FROM 
                         tbl_Product_Master AS p

@@ -82,7 +82,17 @@ const ClosingStockControll = () => {
             const query = `
             SELECT 
                 pre.*,
-                pm.Product_Name 
+                pm.Product_Name,
+                COALESCE((
+                    SELECT 
+                        TOP (1) Product_Rate 
+                    FROM 
+                        tbl_Pro_Rate_Master 
+                    WHERE 
+                        Product_Id = pre.Item_Id
+                    ORDER BY
+                        CONVERT(DATETIME, Rate_Date) DESC
+                ), 0) AS Item_Rate 
             FROM 
                 Previous_Stock_Fn_1(CONVERT(DATE, @day), @retID) AS pre
                 LEFT JOIN tbl_Product_Master AS pm

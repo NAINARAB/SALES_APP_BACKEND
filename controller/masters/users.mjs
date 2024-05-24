@@ -13,12 +13,38 @@ const userMaster = () => {
         }
 
         try {
+            const query = `
+            SELECT
+            	u.UserTypeId,
+            	u.UserId,
+            	u.UserName,
+            	u.Password,
+            	u.BranchId,
+            	b.BranchName,
+            	u.Name,
+            	ut.UserType,
+            	u.Autheticate_Id,
+            	u.Company_Id AS Company_id,
+            	c.Company_Name
+
+            FROM tbl_Users AS u
+
+            LEFT JOIN tbl_Branch_Master AS b
+            ON b.BranchId = u.BranchId
+
+            LEFT JOIN tbl_User_Type AS ut
+            ON ut.Id = u.UserTypeId
+
+            LEFT JOIN tbl_Company_Master AS c
+            ON c.Company_id = u.Company_Id
+
+            WHERE u.Company_Id = @comp AND UDel_Flag= 0`
             const request = new sql.Request(SFDB);
             request.input('User_Id', User_Id);
-            request.input('Company_id', Company_id);
+            request.input('comp', Company_id);
             request.input('Branch_Name', Branch_Id);
 
-            const result = await request.execute('Users_vw');
+            const result = await request.query(query);
 
             if (result.recordset.length > 0) {
                 const encryptPassword = result.recordset.map(o => ({...o, Password: CryptoJS.AES.encrypt(o.Password, 'ly4@&gr$vnh905RyB>?%#@-(KSMT').toString()}))
@@ -108,10 +134,11 @@ const userMaster = () => {
     }
 
     const postUser = async (req, res) => {
-        const { Name, UserName, UserTypeId, Password, BranchId } = req.body;
+        const { Name, UserName, UserTypeId, Password, BranchId, Company_id } = req.body;
+        console.log(req.body)
 
-        if (!Name || !UserName || !UserTypeId || !Password || !BranchId) {
-            return invalidInput(res, 'Name, UserName, UserTypeId, Password and BranchId is required')
+        if (!Name || !UserName || isNaN(UserTypeId) || !Password || isNaN(BranchId) || isNaN(Company_id)) {
+            return invalidInput(res, 'Name, UserName, UserTypeId, Password, Company_id and BranchId is required')
         }
 
         try {
@@ -132,6 +159,7 @@ const userMaster = () => {
             request.input('UserTypeId', UserTypeId);
             request.input('Password', decryptedText);
             request.input('BranchId', BranchId);
+            request.input('Company_id', Company_id)
 
             const result = await request.execute('UsersSP');
 
@@ -171,6 +199,8 @@ const userMaster = () => {
             request.input('UserTypeId', UserTypeId);
             request.input('Password', decryptedText);
             request.input('BranchId', BranchId);
+            request.input('Company_id', 0)
+
 
             const result = await request.execute('UsersSP');
 
@@ -201,6 +231,8 @@ const userMaster = () => {
             request.input('UserTypeId', 0);
             request.input('Password', 0);
             request.input('BranchId', 0);
+            request.input('Company_id', 0)
+
 
             const result = await request.execute('UsersSP');
 
