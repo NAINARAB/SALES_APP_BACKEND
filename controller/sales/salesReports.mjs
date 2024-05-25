@@ -14,52 +14,6 @@ const SalesReports = () => {
         }
 
         try {
-            // const query = `
-            // SELECT
-            // 	a.*,
-            // 	COALESCE((
-            // 		SELECT
-            // 			r.Retailer_Id,
-            // 			r.Retailer_Name,
-            // 			r.Reatailer_Address,
-            // 			r.Mobile_No,
-            // 			r.Latitude,
-            // 			r.Longitude,
-
-            // 			COALESCE((
-            // 			    SELECT 
-            //                     pre.*,
-            //                     pm.Product_Name,
-            //                     COALESCE((
-            //                         SELECT 
-            //                             TOP (1) Product_Rate 
-            //                         FROM 
-            //                             tbl_Pro_Rate_Master 
-            //                         WHERE 
-            //                             Product_Id = pre.Item_Id
-            //                         ORDER BY
-            //                             CONVERT(DATETIME, Rate_Date) DESC
-            //                     ), 0) AS Item_Rate 
-            //                 FROM 
-            //                     Previous_Stock_Fn_1(CONVERT(DATE, GETDATE()), r.Retailer_Id) AS pre
-            //                     LEFT JOIN tbl_Product_Master AS pm
-            //                     ON pm.Product_Id = pre.Item_Id
-            // 			    WHERE 
-            // 			    	pre.Previous_Balance <> 0
-            // 			    FOR JSON PATH
-            // 			), '[]') AS Closing_Stock
-
-            // 		FROM
-            // 			tbl_Retailers_Master AS r
-            // 		WHERE
-            // 			a.Area_Id = r.Area_Id
-            // 			AND
-            // 			r.Company_Id = @comp
-            // 		FOR JSON PATH
-            // 	), '[]') AS Retailer
-            // FROM
-            // 	tbl_Area_Master AS a
-            // `
 
             const query = `
             SELECT
