@@ -166,7 +166,7 @@ const sfProductController = () => {
                     return {
                         ...o,
                         GroupedProductArray: o?.GroupedProductArray?.map(oo => {
-                            const imagePath = path.join(__dirname, '..', 'uploads', 'products', oo?.Product_Image_Name ? oo?.Product_Image_Name : '');
+                            const imagePath = path.join(__dirname, '..', '..', 'uploads', 'products', oo?.Product_Image_Name ? oo?.Product_Image_Name : '');
                             return {
                                 ...oo,
                                 productImageUrl:
