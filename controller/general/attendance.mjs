@@ -265,6 +265,9 @@ const AttendanceControll = () => {
                 a.UserId = @userid`;
             }
 
+            query += `
+            ORDER BY CONVERT(DATETIME, a.Start_Date), a.UserId`
+
             const request = new sql.Request(SFDB);
             request.input('from', From);
             request.input('to', To);
