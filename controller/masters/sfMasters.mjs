@@ -104,11 +104,51 @@ const sfMasters = () => {
         }
     }
 
+    const getProductGroups = async (req, res) => {
+        const { Company_Id } = req.query;
+
+        if (isNaN(Company_Id)) {
+            return invalidInput(res, 'Company_Id is required')
+        }
+        try {
+            const result = await SFDB.query(`SELECT Pro_Group_Id, Pro_Group FROM tbl_Product_Group WHERE Company_Id = '${Company_Id}'`);
+
+            if (result.recordset.length > 0) {
+                dataFound(res, result.recordset);
+            } else {
+                noData(res);
+            }
+        } catch (e) {
+            servError(e, res);
+        }
+    }
+
+    const getProductPacks = async (req, res) => {
+        const { Company_Id } = req.query;
+
+        if (isNaN(Company_Id)) {
+            return invalidInput(res, 'Company_Id is required')
+        }
+        try {
+            const result = await SFDB.query(`SELECT Pack_Id, Pack FROM tbl_Pack_Master WHERE Company_Id = '${Company_Id}'`);
+
+            if (result.recordset.length > 0) {
+                dataFound(res, result.recordset);
+            } else {
+                noData(res);
+            }
+        } catch (e) {
+            servError(e, res);
+        }
+    }
+
     return {
         getStates,
         getDistricts,
         getAreas,
         getOutlet,
+        getProductGroups,
+        getProductPacks,
     }
 }
 

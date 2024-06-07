@@ -21,6 +21,12 @@ import salesReports from "../controller/sales/salesReports.mjs";
 
 const SfRouter = express.Router();
 
+// delete account 
+SfRouter.post('/api/deleteMyAccount',  async (req, res) => {
+    res.json({data: [], success: true, message: 'Processing your request.'})
+})
+
+
 //Login 
 SfRouter.post('/api/login', LoginControl.getLogin)
 SfRouter.post('/api/userAuth', LoginControl.getLoginBYAuth)
@@ -38,9 +44,12 @@ SfRouter.get('/api/masters/state', sfMasters.getStates);
 
 SfRouter.get('/api/masters/district', sfMasters.getDistricts);
 
-SfRouter.get('/api/masters/branch', sfMasters.getAreas);
+SfRouter.get('/api/masters/areas', sfMasters.getAreas);
 
 SfRouter.get('/api/masters/outlets', sfMasters.getOutlet);
+
+SfRouter.get('/api/masters/products/productGroups', sfMasters.getProductGroups)
+SfRouter.get('/api/masters/products/packs', sfMasters.getProductPacks)
 
 //Company
 SfRouter.get('/api/masters/company/info', company.getCompanyInfo)
