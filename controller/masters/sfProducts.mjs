@@ -31,12 +31,8 @@ const deleteCurrentProductImage = async (productId) => {
 
     if (result.recordset.length > 0) {
         const imagePath = result.recordset[0].Product_Image_Path;
-        console.log(imagePath);
         if (imagePath) {
             deleteFile(imagePath)
-                .then(() => {
-                    // console.log('File deleted successfully');
-                })
                 .catch((err) => {
                     console.error('Error deleting file:', err);
                 });

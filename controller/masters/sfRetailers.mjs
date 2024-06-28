@@ -862,7 +862,7 @@ const RetailerControll = () => {
             const result = await request.query(insertQuery);
 
             if (result.rowsAffected[0] && result.rowsAffected[0] > 0) {
-                console.log(result.recordset[0]?.Retailer_Id);
+                
                 await SFDB.query(`
                     UPDATE 
                         tbl_Daily_Call_Log 

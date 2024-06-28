@@ -7,7 +7,6 @@ const LoginControl = () => {
 
     const getLogin = async (req, res) => {
         const { UserName, Password } = req.body;
-        // console.log(req.body)
         if (!UserName || !Password) {
             return invalidInput(res, 'UserName and Password is required');
         }

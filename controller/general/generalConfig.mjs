@@ -48,7 +48,6 @@ const GeneralApi = () => {
             const filesize = req?.file?.size || null;
 
             const { Mode } = req.body;
-            console.log(req.body);
 
             if (isNaN(Mode) || (Number(Mode) !== 1 && Number(Mode) !== 2)) {
                 return invalidInput(res, 'Valid API Mode is required');

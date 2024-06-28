@@ -135,7 +135,6 @@ const userMaster = () => {
 
     const postUser = async (req, res) => {
         const { Name, UserName, UserTypeId, Password, BranchId, Company_id } = req.body;
-        console.log(req.body)
 
         if (!Name || !UserName || isNaN(UserTypeId) || !Password || isNaN(BranchId) || isNaN(Company_id)) {
             return invalidInput(res, 'Name, UserName, UserTypeId, Password, Company_id and BranchId is required')
